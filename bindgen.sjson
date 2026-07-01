@@ -61,6 +61,7 @@ struct_field_overrides = {
 	"contractType.seats" = "Seat"
 	"parResults.parScore" = "[Side][16]i8"
 	"parResults.parContractsString" = "[Side][128]i8"
+	"parTextResults.parText" = "[Side][128]i8"
 	"DDSInfo.system" = "System"
 	"DDSInfo.compiler" = "Compiler"
 	"DDSInfo.constructor" = "Constructor"
@@ -90,6 +91,10 @@ procedure_type_overrides = {
 	"DealerPar.dealer" = "Hand"
 	"DealerParBin.dealer" = "Hand"
 	"ErrorMessage.code" = "Return_Code"
+	// trumpFilter[5] is a per-strain exclude flag in Strain order (TRUE = skip that strain), passed as
+	// int[5] -- an enumerated bool array, NOT a bitmask (so [Strain]b32, 20 bytes, not a bit_set).
+	"CalcAllTables.trumpFilter" = "^[Strain]b32"
+	"CalcAllTablesPBN.trumpFilter" = "^[Strain]b32"
 
 	// return values (all int-returning functions yield a Return_Code)
 	"SetThreading" = "Return_Code"
@@ -116,4 +121,22 @@ procedure_type_overrides = {
 	"AnalysePlayPBN" = "Return_Code"
 	"AnalyseAllPlaysBin" = "Return_Code"
 	"AnalyseAllPlaysPBN" = "Return_Code"
+}
+
+// Ergonomic default values for trailing "boilerplate" parameters. Values chosen from the DDS examples,
+// where these are ALWAYS the same: SetMaxThreads(0) = auto thread count, threadIndex/thrId = 0 (the
+// only thread when not hand-managing the pool), chunkSize = 1. The semantic knobs (target/solutions/
+// mode) are left with no default -- the caller must choose them.
+procedure_parameter_defaults = {
+	"SetMaxThreads.userThreads" = "0"
+	"SetResources.maxThreads" = "0"
+	"SolveBoard.threadIndex" = "0"
+	"SolveBoardPBN.thrId" = "0"
+	"AnalysePlayBin.thrId" = "0"
+	"AnalysePlayPBN.thrId" = "0"
+	"SolveAllChunks.chunkSize" = "1"
+	"SolveAllChunksBin.chunkSize" = "1"
+	"SolveAllChunksPBN.chunkSize" = "1"
+	"AnalyseAllPlaysBin.chunkSize" = "1"
+	"AnalyseAllPlaysPBN.chunkSize" = "1"
 }

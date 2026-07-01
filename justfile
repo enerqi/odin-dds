@@ -1,7 +1,6 @@
 set windows-shell := ["powershell", "-NoLogo", "-Command"]
 set shell := ["bash", "-c"]
 
-main_name := "main.exe"
 test_main_name := "test-main.exe"
 
 # SKELETON: name your extra collection (the `xyz:` prefix in `import "xyz:pkg"`) and where it lives.
@@ -9,16 +8,25 @@ test_main_name := "test-main.exe"
 collection_name := "xyz"
 collection_path := env_var_or_default("XYZ_HOME", "")
 
-# odinfmt select files
+# odinfmt the generated bindings + every example source (src/prelude.odin has no package line, so skip)
 format:
 	odinfmt -w dds.odin
-	odinfmt -w example/main.odin
+	odinfmt -w examples
 
 
-# lint checks for style and potential bugs. Accepts extra args like `--show-timings`as needed
+# lint the bindings, the shared `hands` package, and each single-file example (-file). Accepts extra
+# args like `--show-timings`.
+[unix]
 lint *args:
 	odin check . -vet -vet-cast -strict-style -no-entry-point {{args}}
-	odin check example -vet -vet-cast -strict-style -no-entry-point {{args}}
+	odin check examples/hands -vet -vet-cast -strict-style -no-entry-point {{args}}
+	for f in examples/*.odin; do odin check "$f" -file -vet -vet-cast -strict-style {{args}} || exit 1; done
+
+[windows]
+lint *args:
+	odin check . -vet -vet-cast -strict-style -no-entry-point {{args}}
+	odin check examples/hands -vet -vet-cast -strict-style -no-entry-point {{args}}
+	Get-ChildItem examples/*.odin | ForEach-Object { odin check $_.FullName -file -vet -vet-cast -strict-style {{args}}; if ($LASTEXITCODE -ne 0) { exit 1 } }
 
 
 # ensure the build artifacts top level directory exists
@@ -34,34 +42,35 @@ lint *args:
 @mktarget_dirs:
 	New-Item -ItemType Directory -Force target, target/debug, target/fastdebug, target/release | Out-Null
 
-# run with debug build (-keep-executable so `rerun_debug` can skip recompiling)
-run_debug *args: mktarget_dirs
-	odin run example -debug -microarch:native -show-timings -keep-executable -out:target/debug/{{main_name}} {{args}}
+# run an example (examples/<name>.odin, default smoke) as a single-file program
+# (-keep-executable so `rerun_debug` can skip recompiling)
+run_debug name="smoke" *args: mktarget_dirs
+	odin run examples/{{name}}.odin -file -debug -microarch:native -show-timings -keep-executable -out:target/debug/{{name}}.exe {{args}}
 
 alias run := run_debug
 
-# run with debug and optimizations (-keep-executable so `rerun_fastdebug` can skip recompiling)
-run_fastdebug *args: mktarget_dirs
-	odin run example -debug -o:speed -microarch:native -show-timings -keep-executable -out:target/fastdebug/{{main_name}} {{args}}
+# run an example with debug + optimizations (-keep-executable so `rerun_fastdebug` can skip recompiling)
+run_fastdebug name="smoke" *args: mktarget_dirs
+	odin run examples/{{name}}.odin -file -debug -o:speed -microarch:native -show-timings -keep-executable -out:target/fastdebug/{{name}}.exe {{args}}
 
-# run with optimizations (-keep-executable so `rerun_release` can skip recompiling)
-run_release *args: mktarget_dirs
-	odin run example -o:speed -microarch:native -show-timings -keep-executable -out:target/release/{{main_name}} {{args}}
+# run an example with optimizations (-keep-executable so `rerun_release` can skip recompiling)
+run_release name="smoke" *args: mktarget_dirs
+	odin run examples/{{name}}.odin -file -o:speed -microarch:native -show-timings -keep-executable -out:target/release/{{name}}.exe {{args}}
 
-# re-run the last debug binary WITHOUT recompiling (Odin has no build cache, so a plain `run` always
-# rebuilds). Requires a prior `run_debug`/`run` build.
-rerun_debug *args:
-	./target/debug/{{main_name}} {{args}}
+# re-run the last debug example binary WITHOUT recompiling (Odin has no build cache, so a plain `run`
+# always rebuilds). Requires a prior `run_debug`/`run` of the same example.
+rerun_debug name="smoke" *args:
+	./target/debug/{{name}}.exe {{args}}
 
 alias rerun := rerun_debug
 
-# re-run the last fastdebug binary without recompiling. Requires a prior `run_fastdebug` build.
-rerun_fastdebug *args:
-	./target/fastdebug/{{main_name}} {{args}}
+# re-run the last fastdebug example binary without recompiling. Requires a prior `run_fastdebug`.
+rerun_fastdebug name="smoke" *args:
+	./target/fastdebug/{{name}}.exe {{args}}
 
-# re-run the last release binary without recompiling. Requires a prior `run_release` build.
-rerun_release *args:
-	./target/release/{{main_name}} {{args}}
+# re-run the last release example binary without recompiling. Requires a prior `run_release`.
+rerun_release name="smoke" *args:
+	./target/release/{{name}}.exe {{args}}
 
 # run all tests
 test *args: mktarget_dirs
@@ -83,9 +92,9 @@ clean:
 	-Remove-Item -Recurse -Force target
 	just mktarget_dirs
 
-# build with some verbose diagnostics
-diagnose *args: mktarget_dirs
-	odin build example -debug -microarch:native -show-more-timings -show-debug-messages -show-timings -out:target/debug/{{main_name}} {{args}}
+# build an example with verbose diagnostics
+diagnose name="smoke" *args: mktarget_dirs
+	odin build examples/{{name}}.odin -file -debug -microarch:native -show-more-timings -show-debug-messages -show-timings -out:target/debug/{{name}}.exe {{args}}
 
 
 # Static, not DLL: Odin runs C++ ctors (entry=mainCRTStartup) so the static archive links and

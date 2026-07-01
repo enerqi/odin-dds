@@ -7,7 +7,7 @@ when ODIN_OS == .Windows {
 	// IMPORTANT: DDS does its own one-time init (thread/TT-memory sizing, constant tables) from
 	// DllMain, which only fires for the DLL build. When STATICALLY linked there is no DllMain, so
 	// you MUST call `SetMaxThreads(0)` (or SetResources) once at startup before any other DDS
-	// call, or the first call dereferences unsized state and crashes. See example/main.odin.
+	// call, or the first call dereferences unsized state and crashes. See examples/smoke.odin.
 	foreign import lib "lib/dds.lib"
 } else when ODIN_OS == .Linux || ODIN_OS == .FreeBSD || ODIN_OS == .OpenBSD || ODIN_OS == .NetBSD {
 	when !#exists("lib/dds.a") {
@@ -148,6 +148,10 @@ Solve_Mode :: enum i32 {
 // CalcAllTables / CalcAllTablesPBN `mode` sentinel meaning "do not perform a par calculation".
 // Otherwise that `mode` argument is a Vulnerability value (its own encoding, hence left as i32).
 NO_PAR_CALC :: i32(-1)
+
+// SolveBoard `target` sentinel: solve for the maximum achievable number of tricks. Otherwise `target`
+// is a plain trick count 0..13 (left as i32 -- it is a number, not a categorical value).
+TARGET_FIND_MAX :: i32(-1)
 
 // DDS_Info.system: the OS DDS thinks it is running on.
 System :: enum i32 {

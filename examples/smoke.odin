@@ -5,9 +5,11 @@ import "core:os"
 
 import dds ".."
 
-// Smoke test: link against the DDS static lib, read its build info, then solve a full deal table --
+// Smoke test / getting-started example. Links against the DDS static lib, reports the library's own
+// build info via GetDDSInfo (version, core count, which threading system is active), then solves one
+// full deal table with CalcDDtable -- a minimal end-to-end check that the bindings link and run, while
 // exercising the Odin wrapper types (Holding bit_set, Strain/Hand/Suit enums, enumerated arrays).
-// `just run` builds and runs this.
+// `just run` builds and runs this. See the other examples for each specific DDS entry point.
 main :: proc() {
 	// DDS requires one-time init before any other call: it sizes thread-local transposition-table
 	// memory and computes constant tables. The DLL does this automatically from DllMain, but a

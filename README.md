@@ -45,7 +45,7 @@ main :: proc() {
 ```
 
 Skipping `SetMaxThreads` (or `SetResources`) means the first DDS call dereferences unsized state and crashes. See
-[`example/main.odin`](./example/main.odin) for a runnable smoke test (`just run`).
+[`examples/smoke.odin`](./examples/smoke.odin) for a runnable smoke test (`just run`).
 
 
 ## Version
@@ -102,7 +102,7 @@ and are pasted near the top of the generated file.
 
 Tasks are run with [just](https://just.systems/) (`just TASK`); the Windows shell is PowerShell.
 
-- `just run` / `just run_release` — build and run `example/`
+- `just run [name]` — build and run an example (`examples/<name>.odin`, default `smoke`); e.g. `just run solve_board`
 - `just lint` — type check + vet + strict style
 - `just format` — `odinfmt -w .`
 - `just test` — run tests

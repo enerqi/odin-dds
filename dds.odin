@@ -17,7 +17,7 @@ when ODIN_OS == .Windows {
 	// IMPORTANT: DDS does its own one-time init (thread/TT-memory sizing, constant tables) from
 	// DllMain, which only fires for the DLL build. When STATICALLY linked there is no DllMain, so
 	// you MUST call `SetMaxThreads(0)` (or SetResources) once at startup before any other DDS
-	// call, or the first call dereferences unsized state and crashes. See example/main.odin.
+	// call, or the first call dereferences unsized state and crashes. See examples/smoke.odin.
 	foreign import lib "lib/dds.lib"
 } else when ODIN_OS == .Linux || ODIN_OS == .FreeBSD || ODIN_OS == .OpenBSD || ODIN_OS == .NetBSD {
 	when !#exists("lib/dds.a") {
@@ -159,6 +159,10 @@ Solve_Mode :: enum i32 {
 // Otherwise that `mode` argument is a Vulnerability value (its own encoding, hence left as i32).
 NO_PAR_CALC :: i32(-1)
 
+// SolveBoard `target` sentinel: solve for the maximum achievable number of tricks. Otherwise `target`
+// is a plain trick count 0..13 (left as i32 -- it is a number, not a categorical value).
+TARGET_FIND_MAX :: i32(-1)
+
 // DDS_Info.system: the OS DDS thinks it is running on.
 System :: enum i32 {
 	Unknown,
@@ -228,10 +232,10 @@ error_message :: proc(code: Return_Code, allocator := context.allocator) -> stri
 
 
 /* Version 2.9.0. Allowing for 2 digit minor versions */
-DDS_VERSION   :: 20900
-DDS_HANDS     :: 4
-DDS_SUITS     :: 4
-DDS_STRAINS   :: 5
+DDS_VERSION :: 20900
+DDS_HANDS :: 4
+DDS_SUITS :: 4
+DDS_STRAINS :: 5
 MAXNOOFBOARDS :: 200
 MAXNOOFTABLES :: 40
 
@@ -240,116 +244,116 @@ MAXNOOFTABLES :: 40
 
 // Success.
 RETURN_NO_FAULT :: 1
-TEXT_NO_FAULT   :: "Success"
+TEXT_NO_FAULT :: "Success"
 
 // Currently happens when fopen() fails or when AnalyseAllPlaysBin()
 // get a different number of boards in its first two arguments.
 RETURN_UNKNOWN_FAULT :: -1
-TEXT_UNKNOWN_FAULT   :: "General error"
+TEXT_UNKNOWN_FAULT :: "General error"
 
 // SolveBoard()
 RETURN_ZERO_CARDS :: -2
-TEXT_ZERO_CARDS   :: "Zero cards"
+TEXT_ZERO_CARDS :: "Zero cards"
 
 // SolveBoard()
 RETURN_TARGET_TOO_HIGH :: -3
-TEXT_TARGET_TOO_HIGH   :: "Target exceeds number of tricks"
+TEXT_TARGET_TOO_HIGH :: "Target exceeds number of tricks"
 
 // SolveBoard()
 RETURN_DUPLICATE_CARDS :: -4
-TEXT_DUPLICATE_CARDS   :: "Cards duplicated"
+TEXT_DUPLICATE_CARDS :: "Cards duplicated"
 
 // SolveBoard()
 RETURN_TARGET_WRONG_LO :: -5
-TEXT_TARGET_WRONG_LO   :: "Target is less than -1"
+TEXT_TARGET_WRONG_LO :: "Target is less than -1"
 
 // SolveBoard()
 RETURN_TARGET_WRONG_HI :: -7
-TEXT_TARGET_WRONG_HI   :: "Target is higher than 13"
+TEXT_TARGET_WRONG_HI :: "Target is higher than 13"
 
 // SolveBoard()
 RETURN_SOLNS_WRONG_LO :: -8
-TEXT_SOLNS_WRONG_LO   :: "Solutions parameter is less than 1"
+TEXT_SOLNS_WRONG_LO :: "Solutions parameter is less than 1"
 
 // SolveBoard()
 RETURN_SOLNS_WRONG_HI :: -9
-TEXT_SOLNS_WRONG_HI   :: "Solutions parameter is higher than 3"
+TEXT_SOLNS_WRONG_HI :: "Solutions parameter is higher than 3"
 
 // SolveBoard(), self-explanatory.
 RETURN_TOO_MANY_CARDS :: -10
-TEXT_TOO_MANY_CARDS   :: "Too many cards"
+TEXT_TOO_MANY_CARDS :: "Too many cards"
 
 // SolveBoard()
 RETURN_SUIT_OR_RANK :: -12
-TEXT_SUIT_OR_RANK   :: "currentTrickSuit or currentTrickRank has wrong data"
+TEXT_SUIT_OR_RANK :: "currentTrickSuit or currentTrickRank has wrong data"
 
 // SolveBoard
 RETURN_PLAYED_CARD :: -13
-TEXT_PLAYED_CARD   :: "Played card also remains in a hand"
+TEXT_PLAYED_CARD :: "Played card also remains in a hand"
 
 // SolveBoard()
 RETURN_CARD_COUNT :: -14
-TEXT_CARD_COUNT   :: "Wrong number of remaining cards in a hand"
+TEXT_CARD_COUNT :: "Wrong number of remaining cards in a hand"
 
 // SolveBoard()
 RETURN_THREAD_INDEX :: -15
-TEXT_THREAD_INDEX   :: "Thread index is not 0 .. maximum"
+TEXT_THREAD_INDEX :: "Thread index is not 0 .. maximum"
 
 // SolveBoard()
 RETURN_MODE_WRONG_LO :: -16
-TEXT_MODE_WRONG_LO   :: "Mode parameter is less than 0"
+TEXT_MODE_WRONG_LO :: "Mode parameter is less than 0"
 
 // SolveBoard()
 RETURN_MODE_WRONG_HI :: -17
-TEXT_MODE_WRONG_HI   :: "Mode parameter is higher than 2"
+TEXT_MODE_WRONG_HI :: "Mode parameter is higher than 2"
 
 // SolveBoard()
 RETURN_TRUMP_WRONG :: -18
-TEXT_TRUMP_WRONG   :: "Trump is not in 0 .. 4"
+TEXT_TRUMP_WRONG :: "Trump is not in 0 .. 4"
 
 // SolveBoard()
 RETURN_FIRST_WRONG :: -19
-TEXT_FIRST_WRONG   :: "First is not in 0 .. 2"
+TEXT_FIRST_WRONG :: "First is not in 0 .. 2"
 
 // AnalysePlay*() family of functions.
 // (a) Less than 0 or more than 52 cards supplied.
 // (b) Invalid suit or rank supplied.
 // (c) A played card is not held by the right player.
 RETURN_PLAY_FAULT :: -98
-TEXT_PLAY_FAULT   :: "AnalysePlay input error"
+TEXT_PLAY_FAULT :: "AnalysePlay input error"
 
 // Returned from a number of places if a PBN string is faulty.
 RETURN_PBN_FAULT :: -99
-TEXT_PBN_FAULT   :: "PBN string error"
+TEXT_PBN_FAULT :: "PBN string error"
 
 // SolveBoard() and AnalysePlay*()
 RETURN_TOO_MANY_BOARDS :: -101
-TEXT_TOO_MANY_BOARDS   :: "Too many boards requested"
+TEXT_TOO_MANY_BOARDS :: "Too many boards requested"
 
 // Returned from multi-threading functions.
 RETURN_THREAD_CREATE :: -102
-TEXT_THREAD_CREATE   :: "Could not create threads"
+TEXT_THREAD_CREATE :: "Could not create threads"
 
 // Returned from multi-threading functions when something went
 // wrong while waiting for all threads to complete.
 RETURN_THREAD_WAIT :: -103
-TEXT_THREAD_WAIT   :: "Something failed waiting for thread to end"
+TEXT_THREAD_WAIT :: "Something failed waiting for thread to end"
 
 // Tried to set a multi-threading system that is not present in DLL.
 RETURN_THREAD_MISSING :: -104
-TEXT_THREAD_MISSING   :: "Multi-threading system not present"
+TEXT_THREAD_MISSING :: "Multi-threading system not present"
 
 // CalcAllTables*()
 RETURN_NO_SUIT :: -201
-TEXT_NO_SUIT   :: "Denomination filter vector has no entries"
+TEXT_NO_SUIT :: "Denomination filter vector has no entries"
 
 // CalcAllTables*()
 RETURN_TOO_MANY_TABLES :: -202
-TEXT_TOO_MANY_TABLES   :: "Too many DD tables requested"
+TEXT_TOO_MANY_TABLES :: "Too many DD tables requested"
 
 // SolveAllChunks*()
 RETURN_CHUNK_SIZE :: -301
-TEXT_CHUNK_SIZE   :: "Chunk size is less than 1"
+TEXT_CHUNK_SIZE :: "Chunk size is less than 1"
 
 Future_Tricks :: struct {
 	nodes:  i32,
@@ -371,7 +375,7 @@ Deal :: struct {
 Deal_Pbn :: struct {
 	trump:            Strain,
 	first:            Hand,
-	currentTrickSuit: [3]i32,
+	currentTrickSuit: [3]Suit,
 	currentTrickRank: [3]i32,
 	remainCards:      [80]i8,
 }
@@ -450,25 +454,25 @@ Par_Results_Dealer :: struct {
 }
 
 Contract_Type :: struct {
-	underTricks: i32,            /* 0 = make 1-13 = sacrifice */
-	overTricks:  i32,            /* 0-3, e.g. 1 for 4S + 1. */
-	level:       i32,            /* 1-7 */
+	underTricks: i32, /* 0 = make 1-13 = sacrifice */
+	overTricks:  i32, /* 0-3, e.g. 1 for 4S + 1. */
+	level:       i32, /* 1-7 */
 	denom:       Contract_Denom, /* 0 = No Trumps, 1 = trump Spades, 2 = trump Hearts,
 				  3 = trump Diamonds, 4 = trump Clubs */
-	seats:       Seat,           /* One of the cases N, E, W, S, NS, EW;
+	seats:       Seat, /* One of the cases N, E, W, S, NS, EW;
 				   0 = N 1 = E, 2 = S, 3 = W, 4 = NS, 5 = EW */
 }
 
 Par_Results_Master :: struct {
-	score:     i32,               /* Sign according to the NS view */
-	number:    i32,               /* Number of contracts giving the par score */
+	score:     i32, /* Sign according to the NS view */
+	number:    i32, /* Number of contracts giving the par score */
 	contracts: [10]Contract_Type, /* Par contracts */
 }
 
 Par_Text_Results :: struct {
-	parText: [2][128]i8, /* Short text for par information, e.g.
+	parText: [Side][128]i8, /* Short text for par information, e.g.
 				Par -110: EW 2S EW 2D+1 */
-	equal:   bool,       /* true in the normal case when it does not matter who
+	equal:   bool, /* true in the normal case when it does not matter who
 			starts the bidding. Otherwise, false. */
 }
 
@@ -509,18 +513,18 @@ DDS_Info :: struct {
 	versionString:       [10]i8,
 
 	// Currently 0 = unknown, 1 = Windows, 2 = Cygwin, 3 = Linux, 4 = Apple
-	system: System,
+	system:              System,
 
 	// We know 32 and 64-bit systems.
-	numBits: i32,
+	numBits:             i32,
 
 	// Currently 0 = unknown, 1 = Microsoft Visual C++, 2 = mingw,
 	// 3 = GNU g++, 4 = clang
-	compiler: Compiler,
+	compiler:            Compiler,
 
 	// Currently 0 = none, 1 = DllMain, 2 = Unix-style
-	constructor: Constructor,
-	numCores:    i32,
+	constructor:         Constructor,
+	numCores:            i32,
 
 	// Currently
 	// 0 = none,
@@ -532,48 +536,47 @@ DDS_Info :: struct {
 	// 6 = TBB,
 	// 7 = STLIMPL (for_each), experimental only
 	// 8 = PPLIMPL (for_each), experimental only
-	threading: Threading,
+	threading:           Threading,
 
 	// The actual number of threads configured
-	noOfThreads: i32,
+	noOfThreads:         i32,
 
 	// This will break if there are > 128 threads...
 	// The string is of the form LLLSSS meaning 3 large TT memories
 	// and 3 small ones.
-	threadSizes:  [128]i8,
-	systemString: [1024]i8,
+	threadSizes:         [128]i8,
+	systemString:        [1024]i8,
 }
 
-@(default_calling_convention="c")
+@(default_calling_convention = "c")
 foreign lib {
-	SetMaxThreads             :: proc(userThreads: i32) ---
-	SetThreading              :: proc(code: Threading) -> Return_Code ---
-	SetResources              :: proc(maxMemoryMB: i32, maxThreads: i32) ---
-	FreeMemory                :: proc() ---
-	SolveBoard                :: proc(dl: Deal, target: i32, solutions: Solutions, mode: Solve_Mode, futp: ^Future_Tricks, threadIndex: i32) -> Return_Code ---
-	SolveBoardPBN             :: proc(dlpbn: Deal_Pbn, target: i32, solutions: Solutions, mode: Solve_Mode, futp: ^Future_Tricks, thrId: i32) -> Return_Code ---
-	CalcDDtable               :: proc(tableDeal: Table_Deal, tablep: ^Table_Results) -> Return_Code ---
-	CalcDDtablePBN            :: proc(tableDealPBN: Table_Deal_Pbn, tablep: ^Table_Results) -> Return_Code ---
-	CalcAllTables             :: proc(dealsp: ^Table_Deals, mode: i32, trumpFilter: ^[5]i32, resp: ^Tables_Res, presp: ^All_Par_Results) -> Return_Code ---
-	CalcAllTablesPBN          :: proc(dealsp: ^Table_Deals_Pbn, mode: i32, trumpFilter: ^[5]i32, resp: ^Tables_Res, presp: ^All_Par_Results) -> Return_Code ---
-	SolveAllBoards            :: proc(bop: ^Boards_Pbn, solvedp: ^Solved_Boards) -> Return_Code ---
-	SolveAllChunks            :: proc(bop: ^Boards_Pbn, solvedp: ^Solved_Boards, chunkSize: i32) -> Return_Code ---
-	SolveAllChunksBin         :: proc(bop: ^Boards, solvedp: ^Solved_Boards, chunkSize: i32) -> Return_Code ---
-	SolveAllChunksPBN         :: proc(bop: ^Boards_Pbn, solvedp: ^Solved_Boards, chunkSize: i32) -> Return_Code ---
-	Par                       :: proc(tablep: ^Table_Results, presp: ^Par_Results, vulnerable: Vulnerability) -> Return_Code ---
-	CalcPar                   :: proc(tableDeal: Table_Deal, vulnerable: Vulnerability, tablep: ^Table_Results, presp: ^Par_Results) -> Return_Code ---
-	CalcParPBN                :: proc(tableDealPBN: Table_Deal_Pbn, tablep: ^Table_Results, vulnerable: Vulnerability, presp: ^Par_Results) -> Return_Code ---
-	SidesPar                  :: proc(tablep: ^Table_Results, sidesRes: ^[2]Par_Results_Dealer, vulnerable: Vulnerability) -> Return_Code ---
-	DealerPar                 :: proc(tablep: ^Table_Results, presp: ^Par_Results_Dealer, dealer: Hand, vulnerable: Vulnerability) -> Return_Code ---
-	DealerParBin              :: proc(tablep: ^Table_Results, presp: ^Par_Results_Master, dealer: Hand, vulnerable: Vulnerability) -> Return_Code ---
-	SidesParBin               :: proc(tablep: ^Table_Results, sidesRes: ^[2]Par_Results_Master, vulnerable: Vulnerability) -> Return_Code ---
+	SetMaxThreads :: proc(userThreads: i32 = 0) ---
+	SetThreading :: proc(code: Threading) -> Return_Code ---
+	SetResources :: proc(maxMemoryMB: i32, maxThreads: i32 = 0) ---
+	FreeMemory :: proc() ---
+	SolveBoard :: proc(dl: Deal, target: i32, solutions: Solutions, mode: Solve_Mode, futp: ^Future_Tricks, threadIndex: i32 = 0) -> Return_Code ---
+	SolveBoardPBN :: proc(dlpbn: Deal_Pbn, target: i32, solutions: Solutions, mode: Solve_Mode, futp: ^Future_Tricks, thrId: i32 = 0) -> Return_Code ---
+	CalcDDtable :: proc(tableDeal: Table_Deal, tablep: ^Table_Results) -> Return_Code ---
+	CalcDDtablePBN :: proc(tableDealPBN: Table_Deal_Pbn, tablep: ^Table_Results) -> Return_Code ---
+	CalcAllTables :: proc(dealsp: ^Table_Deals, mode: i32, trumpFilter: ^[Strain]b32, resp: ^Tables_Res, presp: ^All_Par_Results) -> Return_Code ---
+	CalcAllTablesPBN :: proc(dealsp: ^Table_Deals_Pbn, mode: i32, trumpFilter: ^[Strain]b32, resp: ^Tables_Res, presp: ^All_Par_Results) -> Return_Code ---
+	SolveAllBoards :: proc(bop: ^Boards_Pbn, solvedp: ^Solved_Boards) -> Return_Code ---
+	SolveAllChunks :: proc(bop: ^Boards_Pbn, solvedp: ^Solved_Boards, chunkSize: i32 = 1) -> Return_Code ---
+	SolveAllChunksBin :: proc(bop: ^Boards, solvedp: ^Solved_Boards, chunkSize: i32 = 1) -> Return_Code ---
+	SolveAllChunksPBN :: proc(bop: ^Boards_Pbn, solvedp: ^Solved_Boards, chunkSize: i32 = 1) -> Return_Code ---
+	Par :: proc(tablep: ^Table_Results, presp: ^Par_Results, vulnerable: Vulnerability) -> Return_Code ---
+	CalcPar :: proc(tableDeal: Table_Deal, vulnerable: Vulnerability, tablep: ^Table_Results, presp: ^Par_Results) -> Return_Code ---
+	CalcParPBN :: proc(tableDealPBN: Table_Deal_Pbn, tablep: ^Table_Results, vulnerable: Vulnerability, presp: ^Par_Results) -> Return_Code ---
+	SidesPar :: proc(tablep: ^Table_Results, sidesRes: ^[2]Par_Results_Dealer, vulnerable: Vulnerability) -> Return_Code ---
+	DealerPar :: proc(tablep: ^Table_Results, presp: ^Par_Results_Dealer, dealer: Hand, vulnerable: Vulnerability) -> Return_Code ---
+	DealerParBin :: proc(tablep: ^Table_Results, presp: ^Par_Results_Master, dealer: Hand, vulnerable: Vulnerability) -> Return_Code ---
+	SidesParBin :: proc(tablep: ^Table_Results, sidesRes: ^[2]Par_Results_Master, vulnerable: Vulnerability) -> Return_Code ---
 	ConvertToDealerTextFormat :: proc(pres: ^Par_Results_Master, resp: cstring) -> Return_Code ---
-	ConvertToSidesTextFormat  :: proc(pres: ^Par_Results_Master, resp: ^Par_Text_Results) -> Return_Code ---
-	AnalysePlayBin            :: proc(dl: Deal, play: Play_Trace_Bin, solved: ^Solved_Play, thrId: i32) -> Return_Code ---
-	AnalysePlayPBN            :: proc(dlPBN: Deal_Pbn, playPBN: Play_Trace_Pbn, solvedp: ^Solved_Play, thrId: i32) -> Return_Code ---
-	AnalyseAllPlaysBin        :: proc(bop: ^Boards, plp: ^Play_Traces_Bin, solvedp: ^Solved_Plays, chunkSize: i32) -> Return_Code ---
-	AnalyseAllPlaysPBN        :: proc(bopPBN: ^Boards_Pbn, plpPBN: ^Play_Traces_Pbn, solvedp: ^Solved_Plays, chunkSize: i32) -> Return_Code ---
-	GetDDSInfo                :: proc(info: ^DDS_Info) ---
-	ErrorMessage              :: proc(code: Return_Code, line: ^[80]i8) ---
+	ConvertToSidesTextFormat :: proc(pres: ^Par_Results_Master, resp: ^Par_Text_Results) -> Return_Code ---
+	AnalysePlayBin :: proc(dl: Deal, play: Play_Trace_Bin, solved: ^Solved_Play, thrId: i32 = 0) -> Return_Code ---
+	AnalysePlayPBN :: proc(dlPBN: Deal_Pbn, playPBN: Play_Trace_Pbn, solvedp: ^Solved_Play, thrId: i32 = 0) -> Return_Code ---
+	AnalyseAllPlaysBin :: proc(bop: ^Boards, plp: ^Play_Traces_Bin, solvedp: ^Solved_Plays, chunkSize: i32 = 1) -> Return_Code ---
+	AnalyseAllPlaysPBN :: proc(bopPBN: ^Boards_Pbn, plpPBN: ^Play_Traces_Pbn, solvedp: ^Solved_Plays, chunkSize: i32 = 1) -> Return_Code ---
+	GetDDSInfo :: proc(info: ^DDS_Info) ---
+	ErrorMessage :: proc(code: Return_Code, line: ^[80]i8) ---
 }
-
