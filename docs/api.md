@@ -5,7 +5,7 @@ these bindings. It covers the types, the core functions, threading, and memory l
 
 This is a **curated** reference, not an exhaustive port. For the full field-by-field description of every
 struct and function, see the original DDS interface document,
-[`external/dds/doc/dll-description.md`](../external/dds/doc/dll-description.md) — the bindings are a near
+[`dll-description.md`](https://github.com/dds-bridge/dds/blob/7219c95/doc/dll-description.md) — the bindings are a near
 1:1 name-for-name port, so it maps directly (see [Naming](#naming)). Every function below has a runnable
 example under [`examples/`](../examples); those are the authoritative usage samples and double as the test
 suite (`just test`).
@@ -328,6 +328,6 @@ threading system is live. Shown in [`examples/smoke.odin`](../examples/smoke.odi
 
 ## See also
 
-- [`external/dds/doc/dll-description.md`](../external/dds/doc/dll-description.md) — full DDS interface reference (all structs/fields/functions).
+- [`dll-description.md`](https://github.com/dds-bridge/dds/blob/7219c95/doc/dll-description.md) — full DDS interface reference (all structs/fields/functions).
 - [`examples/`](../examples) — a runnable, tested program per entry point.
 - [`README.md`](../README.md) — build, bindgen regeneration, and repo layout.

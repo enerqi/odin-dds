@@ -15,7 +15,7 @@ bindings wrap its public C ABI (`include/dll.h`).
 
 See [`docs/api.md`](./docs/api.md) for the idiomatic-Odin API guide — types, core functions, threading, and
 memory lifecycle. The bindings are a near 1-to-1 port, so the original [DDS interface
-documentation](./external/dds/doc/dll-description.md) also maps directly.
+documentation](https://github.com/dds-bridge/dds/blob/7219c95/doc/dll-description.md) also maps directly.
 
 - Functions keep their C names: `SolveBoard`, `CalcDDtable`, `Par`, ... are called as `dds.SolveBoard`,
 	`dds.CalcDDtable`, `dds.Par`.
