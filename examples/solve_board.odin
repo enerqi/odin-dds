@@ -73,7 +73,11 @@ test_solve_board :: proc(t: ^testing.T) {
 	dl.remainCards = hands.DEALS[0]
 
 	fut: dds.Future_Tricks
-	testing.expect_value(t, dds.SolveBoard(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut), dds.Return_Code.NO_FAULT)
+	testing.expect_value(
+		t,
+		dds.SolveBoard(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut),
+		dds.Return_Code.NO_FAULT,
+	)
 	testing.expect(t, fut.cards > 0)
 	testing.expect_value(t, fut.score[0], 5) // best card yields 5 tricks
 }

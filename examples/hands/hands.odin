@@ -352,11 +352,11 @@ print_solved_play :: proc(solved: ^dds.Solved_Play) {
 // The known double-dummy table for board 0 (DEALS[0] == PBN[0]): resTable[strain][declarer] tricks.
 // The several CalcDDtable-family examples all solve this same board, so they assert against this.
 DDTABLE_0 := [dds.Strain][dds.Hand]i32 {
-	.Spades   = {.North = 5, .East = 8, .South = 5, .West = 8},
-	.Hearts   = {.North = 6, .East = 6, .South = 6, .West = 6},
+	.Spades = {.North = 5, .East = 8, .South = 5, .West = 8},
+	.Hearts = {.North = 6, .East = 6, .South = 6, .West = 6},
 	.Diamonds = {.North = 5, .East = 7, .South = 5, .West = 7},
-	.Clubs    = {.North = 7, .East = 5, .South = 7, .West = 5},
-	.NT       = {.North = 6, .East = 6, .South = 6, .West = 6},
+	.Clubs = {.North = 7, .East = 5, .South = 7, .West = 5},
+	.NT = {.North = 6, .East = 6, .South = 6, .West = 6},
 }
 
 // Assert a full double-dummy table cell-by-cell against `want`. Used by the example tests.

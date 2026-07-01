@@ -59,7 +59,11 @@ test_solve_board_pbn :: proc(t: ^testing.T) {
 	hands.set_chars(dl.remainCards[:], hands.PBN[0])
 
 	fut: dds.Future_Tricks
-	testing.expect_value(t, dds.SolveBoardPBN(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut), dds.Return_Code.NO_FAULT)
+	testing.expect_value(
+		t,
+		dds.SolveBoardPBN(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut),
+		dds.Return_Code.NO_FAULT,
+	)
 	testing.expect(t, fut.cards > 0)
 	testing.expect_value(t, fut.score[0], 5)
 }
