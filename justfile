@@ -9,9 +9,19 @@ collection_name := "xyz"
 collection_path := env_var_or_default("XYZ_HOME", "")
 
 # odinfmt the generated bindings + every example source (src/prelude.odin has no package line, so skip)
+[unix]
 format:
 	odinfmt -w dds.odin
 	odinfmt -w examples
+
+# odinfmt ignores .editorconfig end_of_line=lf and writes CRLF on Windows, re-dirtying the working tree
+# (index stays LF via .gitattributes, so it shows as a spurious line-endings-changed diff). Convert back
+# to LF after formatting so the working tree matches the index.
+[windows]
+format:
+	odinfmt -w dds.odin
+	odinfmt -w examples
+	Get-ChildItem dds.odin, examples/*.odin -File | ForEach-Object { $t = [IO.File]::ReadAllText($_.FullName); [IO.File]::WriteAllText($_.FullName, ($t -replace "`r`n", "`n")) }
 
 
 # lint the bindings, the shared `hands` package, and each single-file example (-file). Accepts extra
