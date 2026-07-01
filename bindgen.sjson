@@ -1,0 +1,119 @@
+// dll.h uses `bool` (parTextResults.equal) but never includes <stdbool.h>.
+// libclang parses a .h as C, where `bool` is not a keyword pre-C23 -> undefined.
+// Map it to the C99 builtin `_Bool`: 1 byte, matching the C++ `bool` in the
+// compiled lib, so struct layout is preserved. bindgen emits Odin `bool`.
+clang_defines = {
+	"bool" = "_Bool"
+}
+
+// Inputs can be folders or files. It will look for header (.h) files inside
+// any folder. The bindings will be based on those headers. Also, any .lib,
+// .odin, .dll etc will be copied to the output folder.
+// NOTE: bindgen names the output file after the header STEM (dll.h -> dll.odin),
+// not package_name. The `bindgen` just recipe renames dll.odin -> dds.odin.
+inputs = [
+	"external/dds/include/dll.h"
+]
+
+// Output folder: One .odin file per processed header
+output_folder = "."
+
+// Remove this prefix from types names (structs, enums, etc)
+remove_type_prefix = "dd"
+
+// Remove this prefix from function names (and add it as link_prefix) to the foreign group
+//remove_function_prefix = "dd"
+
+// Code file that contain libray import code and whatever else extra you need.
+// Overrides lib_file. Is pasted near top of the final bindings.
+// extras to paste near the top of the file such as hand written enum definitions from C defines
+imports_file = "src/prelude.odin"
+
+rename = {
+	"DDSInfo" = "DDS_Info"
+}
+
+// For package line at top of output files
+package_name = "dds"
+
+force_ada_case_types = true
+
+// Retype integer-coded struct fields onto the Odin wrapper types defined in src/prelude.odin.
+// Keys are the ORIGINAL C struct.field names. Values are verbatim Odin types (same size, so the C
+// layout is preserved). Enumerated arrays like [Hand][Suit]Holding make the tables self-documenting.
+struct_field_overrides = {
+	"deal.trump" = "Strain"
+	"deal.first" = "Hand"
+	"deal.currentTrickSuit" = "[3]Suit"
+	"deal.remainCards" = "[Hand][Suit]Holding"
+	"dealPBN.trump" = "Strain"
+	"dealPBN.first" = "Hand"
+	"dealPBN.currentTrickSuit" = "[3]Suit"
+	"ddTableDeal.cards" = "[Hand][Suit]Holding"
+	"ddTableResults.resTable" = "[Strain][Hand]i32"
+	"futureTricks.suit" = "[13]Suit"
+	"futureTricks.equals" = "[13]Holding"
+	"boards.mode" = "[200]Solve_Mode"
+	"boards.solutions" = "[200]Solutions"
+	"boardsPBN.mode" = "[200]Solve_Mode"
+	"boardsPBN.solutions" = "[200]Solutions"
+	"contractType.denom" = "Contract_Denom"
+	"contractType.seats" = "Seat"
+	"parResults.parScore" = "[Side][16]i8"
+	"parResults.parContractsString" = "[Side][128]i8"
+	"DDSInfo.system" = "System"
+	"DDSInfo.compiler" = "Compiler"
+	"DDSInfo.constructor" = "Constructor"
+	"DDSInfo.threading" = "Threading"
+}
+
+// Retype procedure parameters and return values. Keys: `Proc.param` for a parameter, bare `Proc` for
+// the return value. Every int-returning DDS function returns a Return_Code. `mode` is deliberately
+// split: SolveBoard's mode -> Solve_Mode, while CalcAllTables' mode stays i32 (it is a Vulnerability
+// or -1). `threadIndex`/`thrId` stay i32 (a pool index, not a fixed set).
+procedure_type_overrides = {
+	// vulnerable (Vulnerable encoding)
+	"Par.vulnerable" = "Vulnerability"
+	"CalcPar.vulnerable" = "Vulnerability"
+	"CalcParPBN.vulnerable" = "Vulnerability"
+	"DealerPar.vulnerable" = "Vulnerability"
+	"DealerParBin.vulnerable" = "Vulnerability"
+	"SidesPar.vulnerable" = "Vulnerability"
+	"SidesParBin.vulnerable" = "Vulnerability"
+
+	// other parameters
+	"SolveBoard.solutions" = "Solutions"
+	"SolveBoard.mode" = "Solve_Mode"
+	"SolveBoardPBN.solutions" = "Solutions"
+	"SolveBoardPBN.mode" = "Solve_Mode"
+	"SetThreading.code" = "Threading"
+	"DealerPar.dealer" = "Hand"
+	"DealerParBin.dealer" = "Hand"
+	"ErrorMessage.code" = "Return_Code"
+
+	// return values (all int-returning functions yield a Return_Code)
+	"SetThreading" = "Return_Code"
+	"SolveBoard" = "Return_Code"
+	"SolveBoardPBN" = "Return_Code"
+	"CalcDDtable" = "Return_Code"
+	"CalcDDtablePBN" = "Return_Code"
+	"CalcAllTables" = "Return_Code"
+	"CalcAllTablesPBN" = "Return_Code"
+	"SolveAllBoards" = "Return_Code"
+	"SolveAllChunks" = "Return_Code"
+	"SolveAllChunksBin" = "Return_Code"
+	"SolveAllChunksPBN" = "Return_Code"
+	"Par" = "Return_Code"
+	"CalcPar" = "Return_Code"
+	"CalcParPBN" = "Return_Code"
+	"SidesPar" = "Return_Code"
+	"DealerPar" = "Return_Code"
+	"DealerParBin" = "Return_Code"
+	"SidesParBin" = "Return_Code"
+	"ConvertToDealerTextFormat" = "Return_Code"
+	"ConvertToSidesTextFormat" = "Return_Code"
+	"AnalysePlayBin" = "Return_Code"
+	"AnalysePlayPBN" = "Return_Code"
+	"AnalyseAllPlaysBin" = "Return_Code"
+	"AnalyseAllPlaysPBN" = "Return_Code"
+}

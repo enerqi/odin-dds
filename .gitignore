@@ -1,0 +1,20 @@
+.env*
+*.exe
+*.pdb
+*.rdbg
+*.obj
+*.bc
+*.ll
+*.sublime-workspace
+*.lib
+*.exp
+*.sqlite
+*.suo
+*node_modules
+
+# profile data
+**.spall
+
+# Our project outputs artifacts to target/**. A build dir is another common custom directory for artifacts.
+build
+target
