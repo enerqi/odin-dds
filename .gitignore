@@ -7,6 +7,7 @@
 *.ll
 *.sublime-workspace
 *.lib
+!lib/dds.lib
 *.exp
 *.sqlite
 *.suo
@@ -18,3 +19,6 @@
 # Our project outputs artifacts to target/**. A build dir is another common custom directory for artifacts.
 build
 target
+
+.claude
+.codegraph
