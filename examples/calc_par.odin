@@ -18,6 +18,7 @@ import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads()
+	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.DEALS) {
 		// Binary deal -> CalcPar gives table + par together.

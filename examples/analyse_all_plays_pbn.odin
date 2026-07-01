@@ -14,6 +14,7 @@ import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads()
+	defer dds.FreeMemory()
 
 	bo: dds.Boards_Pbn
 	plays: dds.Play_Traces_Pbn

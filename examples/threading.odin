@@ -17,6 +17,7 @@
 package main
 
 import "core:fmt"
+import "core:testing"
 
 import dds ".."
 import "hands"
@@ -24,6 +25,11 @@ import "hands"
 main :: proc() {
 	// One-time init via SetResources instead of SetMaxThreads. maxThreads defaults to 0 (= auto).
 	dds.SetResources(0)
+	// Return the per-thread transposition-table pool at scope exit. `defer` right after init is the
+	// responsible pattern: the memory is released on every exit path -- including the early `return`
+	// below -- without a teardown call at each one. Not strictly needed here (process exit frees it),
+	// but a long-running host should do this between workloads.
+	defer dds.FreeMemory()
 
 	// Select the WinAPI threading backend explicitly. If a backend isn't present, DDS returns
 	// .THREAD_MISSING and keeps its current one.
@@ -53,8 +59,21 @@ main :: proc() {
 		return
 	}
 	fmt.printfln("Solved a table (NT by North = %d tricks).", res.resTable[.NT][.North])
+	// `defer dds.FreeMemory()` above releases the per-thread pool as this proc returns.
+}
 
-	// Hand the transposition-table memory back. Safe to call; further DDS calls re-allocate as needed.
-	dds.FreeMemory()
-	fmt.println("FreeMemory: released the per-thread transposition-table pool.")
+// Exercise the resource lifecycle -- SetResources init, real work, FreeMemory teardown -- and assert
+// the board-0 table came out right. SetThreading is best-effort (.THREAD_MISSING if the backend isn't
+// compiled in), so it is not asserted.
+@(test)
+test_threading :: proc(t: ^testing.T) {
+	dds.SetResources(0)
+	defer dds.FreeMemory()
+	dds.SetThreading(.WinAPI) // best-effort; keep whatever backend is available
+
+	td: dds.Table_Deal
+	td.cards = hands.DEALS[0]
+	res: dds.Table_Results
+	testing.expect_value(t, dds.CalcDDtable(td, &res), dds.Return_Code.NO_FAULT)
+	hands.expect_table(t, &res, hands.DDTABLE_0)
 }

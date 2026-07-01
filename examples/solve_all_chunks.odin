@@ -15,12 +15,14 @@
 package main
 
 import "core:fmt"
+import "core:testing"
 
 import dds ".."
 import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads()
+	defer dds.FreeMemory()
 
 	// Binary batch via SolveAllChunksBin.
 	bo: dds.Boards
@@ -66,4 +68,26 @@ main :: proc() {
 		return
 	}
 	fmt.println("SolveAllChunksPBN / SolveAllChunks (PBN input): OK, results match the binary batch.")
+}
+
+// Batch-solve the binary boards via SolveAllChunksBin; assert board 0's best card scores 5 tricks.
+@(test)
+test_solve_all_chunks :: proc(t: ^testing.T) {
+	dds.SetMaxThreads()
+	defer dds.FreeMemory()
+
+	bo: dds.Boards
+	bo.noOfBoards = i32(len(hands.DEALS))
+	for handno in 0 ..< len(hands.DEALS) {
+		bo.deals[handno].trump = hands.TRUMP[handno]
+		bo.deals[handno].first = hands.FIRST[handno]
+		bo.deals[handno].remainCards = hands.DEALS[handno]
+		bo.target[handno] = dds.TARGET_FIND_MAX
+		bo.solutions[handno] = .All
+		bo.mode[handno] = .Auto_Skip_Single
+	}
+
+	solved: dds.Solved_Boards
+	testing.expect_value(t, dds.SolveAllChunksBin(&bo, &solved, 1), dds.Return_Code.NO_FAULT)
+	testing.expect_value(t, solved.solvedBoard[0].score[0], 5)
 }

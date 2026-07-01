@@ -13,12 +13,14 @@
 package main
 
 import "core:fmt"
+import "core:testing"
 
 import dds ".."
 import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads()
+	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.PBN) {
 		dl: dds.Deal_Pbn
@@ -43,4 +45,21 @@ main :: proc() {
 		hands.print_fut("solutions == 2", &fut2)
 		fmt.println()
 	}
+}
+
+// PBN board 0, same solve as solve_board: best card yields 5 tricks for the hand on lead.
+@(test)
+test_solve_board_pbn :: proc(t: ^testing.T) {
+	dds.SetMaxThreads()
+	defer dds.FreeMemory()
+
+	dl: dds.Deal_Pbn
+	dl.trump = hands.TRUMP[0]
+	dl.first = hands.FIRST[0]
+	hands.set_chars(dl.remainCards[:], hands.PBN[0])
+
+	fut: dds.Future_Tricks
+	testing.expect_value(t, dds.SolveBoardPBN(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut), dds.Return_Code.NO_FAULT)
+	testing.expect(t, fut.cards > 0)
+	testing.expect_value(t, fut.score[0], 5)
 }

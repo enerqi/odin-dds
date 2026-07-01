@@ -22,6 +22,7 @@ import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads()
+	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.DEALS) {
 		td: dds.Table_Deal

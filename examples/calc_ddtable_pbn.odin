@@ -8,12 +8,14 @@
 package main
 
 import "core:fmt"
+import "core:testing"
 
 import dds ".."
 import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads()
+	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.PBN) {
 		td: dds.Table_Deal_Pbn
@@ -29,4 +31,19 @@ main :: proc() {
 		hands.print_table(&res)
 		fmt.println()
 	}
+}
+
+// Solve PBN board 0 and assert its full double-dummy table -- must match the binary calc_ddtable result
+// for the same board. `just test_examples` runs this via `odin test`.
+@(test)
+test_calc_ddtable_pbn :: proc(t: ^testing.T) {
+	dds.SetMaxThreads()
+	defer dds.FreeMemory()
+
+	td: dds.Table_Deal_Pbn
+	hands.set_chars(td.cards[:], hands.PBN[0])
+
+	res: dds.Table_Results
+	testing.expect_value(t, dds.CalcDDtablePBN(td, &res), dds.Return_Code.NO_FAULT)
+	hands.expect_table(t, &res, hands.DDTABLE_0)
 }

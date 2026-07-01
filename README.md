@@ -13,8 +13,9 @@ bindings wrap its public C ABI (`include/dll.h`).
 
 ## API structure
 
-The bindings are a near 1-to-1 port, so the original [DDS interface
-documentation](./external/dds/doc/dll-description.md) is easy to follow.
+See [`docs/api.md`](./docs/api.md) for the idiomatic-Odin API guide — types, core functions, threading, and
+memory lifecycle. The bindings are a near 1-to-1 port, so the original [DDS interface
+documentation](./external/dds/doc/dll-description.md) also maps directly.
 
 - Functions keep their C names: `SolveBoard`, `CalcDDtable`, `Par`, ... are called as `dds.SolveBoard`,
 	`dds.CalcDDtable`, `dds.Par`.
@@ -40,7 +41,8 @@ main :: proc() {
 	deal: dds.Deal
 	// ... fill in the deal ...
 	fut: dds.Future_Tricks
-	dds.SolveBoard(deal, -1, 3, 1, &fut, 0)
+	// target = TARGET_FIND_MAX (find the best), solutions = .All, mode = .Auto_Skip_Single.
+	dds.SolveBoard(deal, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut)
 }
 ```
 
@@ -105,7 +107,7 @@ Tasks are run with [just](https://just.systems/) (`just TASK`); the Windows shel
 - `just run [name]` — build and run an example (`examples/<name>.odin`, default `smoke`); e.g. `just run solve_board`
 - `just lint` — type check + vet + strict style
 - `just format` — `odinfmt -w .`
-- `just test` — run tests
+- `just test` — run all tests (they live as `@(test)` procs inside `examples/*.odin`); `just test1 <name>` runs one example's tests
 - `just build-lib` — (re)build and stage the DDS static lib
 - `just bindgen` — regenerate the bindings
 - `just submodules` — check out / update the `external/dds` submodule

@@ -15,6 +15,7 @@ import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads()
+	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.PBN) {
 		dl: dds.Deal_Pbn

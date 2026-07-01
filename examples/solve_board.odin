@@ -22,12 +22,14 @@
 package main
 
 import "core:fmt"
+import "core:testing"
 
 import dds ".."
 import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads() // required one-time init (default 0 = auto thread count)
+	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.DEALS) {
 		dl: dds.Deal
@@ -56,4 +58,22 @@ main :: proc() {
 		hands.print_fut("solutions = All_Optimal (best cards only)", &fut2)
 		fmt.println()
 	}
+}
+
+// Solve board 0 for the max makeable tricks by the hand on lead. North on lead in spades can make 5;
+// assert that top score. (Same value the other solve_* examples produce for this board.)
+@(test)
+test_solve_board :: proc(t: ^testing.T) {
+	dds.SetMaxThreads()
+	defer dds.FreeMemory()
+
+	dl: dds.Deal
+	dl.trump = hands.TRUMP[0]
+	dl.first = hands.FIRST[0]
+	dl.remainCards = hands.DEALS[0]
+
+	fut: dds.Future_Tricks
+	testing.expect_value(t, dds.SolveBoard(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut), dds.Return_Code.NO_FAULT)
+	testing.expect(t, fut.cards > 0)
+	testing.expect_value(t, fut.score[0], 5) // best card yields 5 tricks
 }

@@ -15,12 +15,14 @@
 package main
 
 import "core:fmt"
+import "core:testing"
 
 import dds ".."
 import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads() // required one-time init (default 0 = auto thread count)
+	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.DEALS) {
 		table_deal: dds.Table_Deal
@@ -36,4 +38,20 @@ main :: proc() {
 		hands.print_table(&res)
 		fmt.println()
 	}
+}
+
+// Same computation as `main` without the printing: solve DEALS[0] and assert its full double-dummy
+// table (strain x declarer), verified against the known result for that board. `just test_examples`
+// runs it via `odin test`, which invokes @(test) procs and ignores `main`.
+@(test)
+test_calc_ddtable :: proc(t: ^testing.T) {
+	dds.SetMaxThreads()
+	defer dds.FreeMemory()
+
+	table_deal: dds.Table_Deal
+	table_deal.cards = hands.DEALS[0]
+
+	res: dds.Table_Results
+	testing.expect_value(t, dds.CalcDDtable(table_deal, &res), dds.Return_Code.NO_FAULT)
+	hands.expect_table(t, &res, hands.DDTABLE_0)
 }

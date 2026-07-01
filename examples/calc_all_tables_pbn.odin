@@ -8,12 +8,14 @@
 package main
 
 import "core:fmt"
+import "core:testing"
 
 import dds ".."
 import "hands"
 
 main :: proc() {
 	dds.SetMaxThreads()
+	defer dds.FreeMemory()
 
 	deals: dds.Table_Deals_Pbn
 	deals.noOfTables = i32(len(hands.PBN))
@@ -34,4 +36,23 @@ main :: proc() {
 		hands.print_table(&res.results[handno])
 		fmt.println()
 	}
+}
+
+// Batch-solve all PBN boards and assert the first result table matches the known board-0 table.
+@(test)
+test_calc_all_tables_pbn :: proc(t: ^testing.T) {
+	dds.SetMaxThreads()
+	defer dds.FreeMemory()
+
+	deals: dds.Table_Deals_Pbn
+	deals.noOfTables = i32(len(hands.PBN))
+	for handno in 0 ..< len(hands.PBN) {
+		hands.set_chars(deals.deals[handno].cards[:], hands.PBN[handno])
+	}
+
+	filter: [dds.Strain]b32
+	res: dds.Tables_Res
+	par: dds.All_Par_Results
+	testing.expect_value(t, dds.CalcAllTablesPBN(&deals, 0, &filter, &res, &par), dds.Return_Code.NO_FAULT)
+	hands.expect_table(t, &res.results[0], hands.DDTABLE_0)
 }

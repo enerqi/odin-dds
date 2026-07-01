@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:os"
+import "core:testing"
 
 import dds ".."
 
@@ -16,6 +17,7 @@ main :: proc() {
 	// STATIC lib on Windows has no auto-init (DllMain never fires when statically linked), so we
 	// must call it ourselves. 0 = let DDS pick the thread count from the core count.
 	dds.SetMaxThreads(0)
+	defer dds.FreeMemory()
 
 	info: dds.DDS_Info
 	dds.GetDDSInfo(&info)
@@ -48,4 +50,25 @@ main :: proc() {
 	fmt.printfln("Tricks in NT by North:      %d", res.resTable[.NT][.North])
 	fmt.printfln("Tricks in Spades by North:  %d", res.resTable[.Spades][.North])
 	fmt.printfln("Tricks in Hearts by East:   %d", res.resTable[.Hearts][.East])
+}
+
+// `odin test` picks up @(test) procs and ignores `main`, so the example doubles as a test. Same deal as
+// `main`, minus the info/printing: assert the known trick counts instead. `just test_examples` runs it.
+@(test)
+test_smoke :: proc(t: ^testing.T) {
+	dds.SetMaxThreads(0)
+	defer dds.FreeMemory()
+
+	full_suit := dds.Holding{._2, ._3, ._4, ._5, ._6, ._7, ._8, ._9, .Ten, .Jack, .Queen, .King, .Ace}
+	deal: dds.Table_Deal
+	deal.cards[.North][.Spades] = full_suit
+	deal.cards[.East][.Hearts] = full_suit
+	deal.cards[.South][.Diamonds] = full_suit
+	deal.cards[.West][.Clubs] = full_suit
+
+	res: dds.Table_Results
+	testing.expect_value(t, dds.CalcDDtable(deal, &res), dds.Return_Code.NO_FAULT)
+	testing.expect_value(t, res.resTable[.NT][.North], 0)
+	testing.expect_value(t, res.resTable[.Spades][.North], 13)
+	testing.expect_value(t, res.resTable[.Hearts][.East], 13)
 }

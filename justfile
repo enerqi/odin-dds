@@ -72,13 +72,29 @@ rerun_fastdebug name="smoke" *args:
 rerun_release name="smoke" *args:
 	./target/release/{{name}}.exe {{args}}
 
-# run all tests
+# run all tests. The tests live as @(test) procs INSIDE the single-file examples (examples/*.odin);
+# there is no separate test package. Each example is its own `package main`, so (like `lint`) they
+# compile one at a time with -file; `odin test` runs the @(test) procs and ignores `main`. Examples
+# with no @(test) proc just print "No tests to run" (exit 0, harmless).
+#
+# ODIN_TEST_THREADS=1 forces the test runner to run @(test) procs serially. `odin test` otherwise runs
+# them on a thread pool, but the DDS transposition-table pool is a process-global: one test's
+# `defer dds.FreeMemory()` would tear it down under another test running concurrently -> race/crash.
+# Today each example is a separate -file binary with one @(test), so nothing runs concurrently anyway;
+# this pins it safe if a file ever gains a second @(test).
+[unix]
 test *args: mktarget_dirs
-	odin test . -debug -file -microarch:native -show-timings -out:target/debug/{{test_main_name}} {{args}}
+	for f in examples/*.odin; do odin test "$f" -file -debug -microarch:native -define:ODIN_TEST_THREADS=1 -out:target/debug/{{test_main_name}} {{args}} || exit 1; done
 
-# run one named test
+[windows]
+test *args: mktarget_dirs
+	Get-ChildItem examples/*.odin | ForEach-Object { odin test $_.FullName -file -debug -microarch:native -define:ODIN_TEST_THREADS=1 -out:target/debug/{{test_main_name}} {{args}}; if ($LASTEXITCODE -ne 0) { exit 1 } }
+
+# run the tests in ONE example (examples/<name>.odin, e.g. `just test1 solve_board`). Filter to a single
+# @(test) proc with extra args, e.g. `just test1 solve_board -test-name:test_solve_board`.
+# ODIN_TEST_THREADS=1: run serially -- see the `test` recipe for why (DDS FreeMemory is process-global).
 test1 name *args: mktarget_dirs
-	odin test . -debug -file -microarch:native -show-timings -test-name:{{name}} -out:target/debug/{{test_main_name}} {{args}}
+	odin test examples/{{name}}.odin -file -debug -microarch:native -show-timings -define:ODIN_TEST_THREADS=1 -out:target/debug/{{test_main_name}} {{args}}
 
 # simple delete of all debug databases and executables in the target directory
 [unix]
