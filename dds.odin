@@ -561,6 +561,7 @@ foreign lib {
 	CalcAllTables :: proc(dealsp: ^Table_Deals, mode: i32, trumpFilter: ^[Strain]b32, resp: ^Tables_Res, presp: ^All_Par_Results) -> Return_Code ---
 	CalcAllTablesPBN :: proc(dealsp: ^Table_Deals_Pbn, mode: i32, trumpFilter: ^[Strain]b32, resp: ^Tables_Res, presp: ^All_Par_Results) -> Return_Code ---
 	SolveAllBoards :: proc(bop: ^Boards_Pbn, solvedp: ^Solved_Boards) -> Return_Code ---
+	SolveAllBoardsBin :: proc(bop: ^Boards, solvedp: ^Solved_Boards) -> Return_Code ---
 	SolveAllChunks :: proc(bop: ^Boards_Pbn, solvedp: ^Solved_Boards, chunkSize: i32 = 1) -> Return_Code ---
 	SolveAllChunksBin :: proc(bop: ^Boards, solvedp: ^Solved_Boards, chunkSize: i32 = 1) -> Return_Code ---
 	SolveAllChunksPBN :: proc(bop: ^Boards_Pbn, solvedp: ^Solved_Boards, chunkSize: i32 = 1) -> Return_Code ---

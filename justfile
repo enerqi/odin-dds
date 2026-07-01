@@ -136,8 +136,8 @@ build-lib: submodules
 	make -C src
 	# TODO: src/Makefile (Unix/macOS) not written yet. Model it on odin-yyjson's src/Makefile,
 	# built from external/dds/src/Makefile_linux_static (and Makefile_Mac_*_static for darwin).
-	# It must compile the DDS 2.9.0 sources and stage lib/dds.a (+ lib/darwin/dds.a on macOS),
-	# matching the paths src/prelude.odin expects.
+	# It must compile the DDS sources (2.9.1 code, pinned commit 7219c95) and stage lib/dds.a
+	# (+ lib/darwin/dds.a on macOS), matching the paths src/prelude.odin expects.
 
 # build the self-contained DDS static lib and stage it into ./lib
 [windows]

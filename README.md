@@ -52,9 +52,16 @@ Skipping `SetMaxThreads` (or `SetResources`) means the first DDS call dereferenc
 
 ## Version
 
-| odin-dds tag | DDS version | notes                        |
-| ------------ | ----------- | ---------------------------- |
-| 2026-07      | 2.9.0       | Initial bindings             |
+| odin-dds tag | DDS version           | notes                        |
+| ------------ | --------------------- | ---------------------------- |
+| 2026-07      | 2.9.1 code (`7219c95`) | Initial bindings             |
+
+> DDS never tagged 2.9.1, so the `external/dds` submodule is pinned to commit **`7219c95`** — the
+> code-complete 2.9.1 point on the flat-layout `include/`+`src/` tree (`DDS_VERSION` upstream is still
+> `20900`; the version was never bumped). This gets the 2.9.1 fixes — rimmington's transposition-table
+> memory-freeing fixes, `#include <stdbool.h>` in C mode, and the `SolveAllBoardsBin` entry point —
+> without the later v3 refactor that moved `dll.h` to `library/src/api/`. Validated with DDS's own
+> `dtest` (0 differences across solve/calc/play/par).
 
 
 ## Building the DDS static library
@@ -63,8 +70,9 @@ Skipping `SetMaxThreads` (or `SetResources`) means the first DDS call dereferenc
 - It is a **self-contained** static archive: no `dds.dll` and no `VCOMP140.DLL` (OpenMP) to ship — the whole solver
 	folds into your one Odin executable. DDS runs its Windows-native (WinAPI) threading, so dropping OpenMP loses nothing
 	here.
-- The build script lives in [`src/build.cmd`](./src/build.cmd) (MSVC `cl` + `lib`). It compiles the DDS 2.9.0 sources
-	from the `external/dds` submodule with `/MT` (static CRT, to match Odin's `libcmt` host) and archives them.
+- The build script lives in [`src/build.cmd`](./src/build.cmd) (MSVC `cl` + `lib`). It compiles the DDS sources
+	(2.9.1 code, pinned commit `7219c95`) from the `external/dds` submodule with `/MT` (static CRT, to match Odin's
+	`libcmt` host) and archives them.
 
 Rebuild it with:
 
@@ -89,12 +97,12 @@ using [`bindgen.sjson`](./bindgen.sjson). Regenerate with:
 just bindgen
 ```
 
-Two `bindgen.sjson` details worth knowing:
+A `bindgen.sjson` detail worth knowing: bindgen names its output after the header stem (`dll.h` → `dll.odin`),
+so `just bindgen` renames it to `dds.odin`.
 
-- `clang_defines = { "bool" = "_Bool" }` — `dll.h` uses `bool` without including `<stdbool.h>`; libclang parses a `.h`
-	as C, where `bool` is not a keyword pre-C23. `_Bool` is the 1-byte C99 builtin, matching the C++ `bool` in the
-	compiled lib so struct layout is preserved.
-- bindgen names its output after the header stem (`dll.h` → `dll.odin`), so `just bindgen` renames it to `dds.odin`.
+> Historical note: DDS 2.9.0's `dll.h` used `bool` without including `<stdbool.h>`, so `bool` was undefined
+> when libclang parsed the header as C — the bindings needed a `clang_defines = { "bool" = "_Bool" }` override.
+> The 2.9.1 pin (`7219c95`) adds that include upstream, so `bool` resolves on its own and the override is gone.
 
 Hand-written additions (the `foreign import` block, platform selection) live in [`src/prelude.odin`](./src/prelude.odin)
 and are pasted near the top of the generated file.

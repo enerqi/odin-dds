@@ -167,9 +167,9 @@ cost a trick.
 → [`analyse_play_bin.odin`](../examples/analyse_play_bin.odin), [`analyse_play_pbn.odin`](../examples/analyse_play_pbn.odin)
 
 ### Batched forms — solve many deals in one call
-`SolveAllBoards`, `SolveAllChunks*`, `CalcAllTables*`, `AnalyseAllPlays*` take up to `dds.MAXNOOFBOARDS`
-(**200**) deals and solve them **in parallel across DDS's own threads** (see below). Prefer these to a hand
-loop when you have many deals.
+`SolveAllBoards` / `SolveAllBoardsBin`, `SolveAllChunks*`, `CalcAllTables*`, `AnalyseAllPlays*` take up to
+`dds.MAXNOOFBOARDS` (**200**) deals and solve them **in parallel across DDS's own threads** (see below).
+Prefer these to a hand loop when you have many deals.
 
 ```odin
 bo: dds.Boards_Pbn
@@ -178,6 +178,11 @@ bo.noOfBoards = i32(n)                  // <= 200
 solved: dds.Solved_Boards
 dds.SolveAllBoards(&bo, &solved)        // DDS fans out internally
 ```
+
+`SolveAllBoards` takes PBN input (`Boards_Pbn`); **`SolveAllBoardsBin`** is its binary-input twin (takes
+`Boards`, whose deals hold `Holding` bit_sets) — added in DDS 2.9.1 "for symmetry" with the PBN form. Note
+`SolveAllBoards` fixes `chunkSize` internally, whereas the `SolveAllChunks*` variants expose it.
+
 → [`solve_all_boards.odin`](../examples/solve_all_boards.odin), [`solve_all_chunks.odin`](../examples/solve_all_chunks.odin),
 [`calc_all_tables.odin`](../examples/calc_all_tables.odin), [`analyse_all_plays_bin.odin`](../examples/analyse_all_plays_bin.odin)
 
@@ -190,8 +195,8 @@ The most common confusion: **you rarely thread anything yourself — DDS does th
 
 ### 1. DDS's internal worker pool — the default
 
-The **batched** functions — `SolveAllBoards`, `SolveAllChunksBin/PBN`, `CalcAllTables/PBN`,
-`AnalyseAllPlays*` — split their boards across a pool of worker threads **inside DDS**. `CalcDDtable`
+The **batched** functions — `SolveAllBoards`/`SolveAllBoardsBin`, `SolveAllChunksBin/PBN`,
+`CalcAllTables/PBN`, `AnalyseAllPlays*` — split their boards across a pool of worker threads **inside DDS**. `CalcDDtable`
 similarly parallelizes per strain. You hand DDS a batch; it fans out; you get results back. **No threads in
 your code.** From `dll-description.md`:
 
