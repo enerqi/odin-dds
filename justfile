@@ -3,11 +3,6 @@ set shell := ["bash", "-c"]
 
 test_main_name := "test-main.exe"
 
-# SKELETON: name your extra collection (the `xyz:` prefix in `import "xyz:pkg"`) and where it lives.
-# collection_path is read from an env var so the absolute path stays out of git; rename both to suit.
-collection_name := "xyz"
-collection_path := env_var_or_default("XYZ_HOME", "")
-
 # odinfmt the generated bindings + every example source (src/prelude.odin has no package line, so skip)
 [unix]
 format:
