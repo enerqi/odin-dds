@@ -37,6 +37,7 @@ import dds ".."
 
 main :: proc() {
 	dds.SetMaxThreads(0) // 0 = let DDS pick the thread count from the core count. Call once, before anything else.
+	defer dds.FreeMemory()
 
 	deal: dds.Deal
 	// ... fill in the deal ...
