@@ -86,8 +86,8 @@ if not defined DDS_DIR set "DDS_DIR=."
 for %%I in ("%DDS_DIR%") do set "DDS_DIR=%%~fI"
 set "SRC_DIR=%DDS_DIR%\src"
 if not exist "%SRC_DIR%\dds.cpp" (
-    echo [build] No DDS sources at "%SRC_DIR%". Pass the dds root as 2nd arg.
-    exit /b 1
+	echo [build] No DDS sources at "%SRC_DIR%". Pass the dds root as 2nd arg.
+	exit /b 1
 )
 set "BUILD_DIR=%DDS_DIR%\build"
 set "OBJ_DIR=%BUILD_DIR%\obj"
@@ -101,19 +101,19 @@ if %errorlevel%==0 goto have_cl
 
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 if not exist "%VSWHERE%" (
-    echo [build] cl not on PATH and vswhere not found.
-    echo [build] Open a "x64 Native Tools Command Prompt for VS" and re-run.
-    exit /b 1
+	echo [build] cl not on PATH and vswhere not found.
+	echo [build] Open a "x64 Native Tools Command Prompt for VS" and re-run.
+	exit /b 1
 )
 rem -prerelease so VS 2026 / preview channels are found too.
 for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSINSTALL=%%i"
 if not defined VSINSTALL (
-    echo [build] No VS install with C++ tools found via vswhere.
-    exit /b 1
+	echo [build] No VS install with C++ tools found via vswhere.
+	exit /b 1
 )
 if not exist "%VSINSTALL%\VC\Auxiliary\Build\vcvars64.bat" (
-    echo [build] vcvars64.bat missing under "%VSINSTALL%".
-    exit /b 1
+	echo [build] vcvars64.bat missing under "%VSINSTALL%".
+	exit /b 1
 )
 echo [build] Loading x64 toolchain from "%VSINSTALL%"
 call "%VSINSTALL%\VC\Auxiliary\Build\vcvars64.bat" >nul
@@ -176,7 +176,7 @@ rem sharpens the "trim the static lib" goal for Odin/lld-link consumers.
 rem /wd4996 + _CRT_SECURE_NO_WARNINGS silence the C4996 "unsafe" deprecation
 rem warnings on strcpy/sprintf/strcat etc. that DDS uses throughout.
 rem /wd4267 silences C4267 size_t->unsigned narrowing in TransTableL.cpp.
-set "COMPILE_FLAGS=/nologo /c /MP %CRT% /EHsc /std:c++17 /O2 /Gy %GL_FLAG% %ARCH% /W3 /wd4996 /wd4267 /D_CRT_SECURE_NO_WARNINGS /DWIN32 /D_WINDOWS %OMP_FLAG% %DDS_BEHAVIOR% %THREADING%"
+set "COMPILE_FLAGS=/nologo /c /MP %CRT% /EHsc /std:c++20 /O2 /Gy %GL_FLAG% %ARCH% /W3 /wd4996 /wd4267 /D_CRT_SECURE_NO_WARNINGS /DWIN32 /D_WINDOWS %OMP_FLAG% %DDS_BEHAVIOR% %THREADING%"
 
 rem To mirror the makefile's aggressive warnings instead, swap /W3 above for:
 rem   /Wall /WX /wd4365 /wd4464 /wd4514 /wd4555 /wd4571 /wd4623 /wd4625
@@ -195,8 +195,8 @@ echo [build] Mode: %MODE%
 echo [build] Compiling %SRC_DIR%\*.cpp -^> %OBJ_DIR%
 cl %COMPILE_FLAGS% /Fo"%OBJ_DIR%\\" %SOURCES%
 if errorlevel 1 (
-    echo [build] Compilation FAILED.
-    popd & exit /b 1
+	echo [build] Compilation FAILED.
+	popd & exit /b 1
 )
 
 if /i "%MODE%"=="dll" goto link_dll
@@ -207,8 +207,8 @@ rem Plain archive: objects are real COFF (no /GL), so no /LTCG. Foreign-linker
 rem friendly (Odin etc.) and dead-strippable by any linker.
 lib /nologo /OUT:"%OUT_LIB%" "%OBJ_DIR%\*.obj"
 if errorlevel 1 (
-    echo [build] lib FAILED.
-    popd & exit /b 1
+	echo [build] lib FAILED.
+	popd & exit /b 1
 )
 popd
 echo [build] Removing intermediate objects %OBJ_DIR%
@@ -222,9 +222,9 @@ rem --- shared library (DLL) ---------------------------------------------------
 echo [build] Compiling version resource dds.rc -^> %RES_FILE%
 rc /nologo /fo "%RES_FILE%" dds.rc
 if errorlevel 1 (
-    echo [build] rc FAILED. (You can drop the .res from the link line if rc is
-    echo [build]  unavailable - it only carries DLL version metadata.^)
-    popd & exit /b 1
+	echo [build] rc FAILED. (You can drop the .res from the link line if rc is
+	echo [build]  unavailable - it only carries DLL version metadata.^)
+	popd & exit /b 1
 )
 
 echo [build] Linking -^> %OUT_DLL%
@@ -232,10 +232,10 @@ rem /LTCG matches the /GL objects. Exports.def names the public API symbols.
 rem /IMPLIB writes the import library next to the DLL (named dds.lib).
 rem /OPT:REF,ICF strips unused /Gy COMDATs and folds identical ones.
 link /nologo /DLL /LTCG /OPT:REF /OPT:ICF /OUT:"%OUT_DLL%" /IMPLIB:"%OUT_LIB%" ^
-    /DEF:Exports.def "%OBJ_DIR%\*.obj" "%RES_FILE%"
+	/DEF:Exports.def "%OBJ_DIR%\*.obj" "%RES_FILE%"
 if errorlevel 1 (
-    echo [build] link FAILED.
-    popd & exit /b 1
+	echo [build] link FAILED.
+	popd & exit /b 1
 )
 popd
 echo [build] Removing intermediate objects %OBJ_DIR%

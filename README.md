@@ -66,26 +66,27 @@ Skipping `SetMaxThreads` (or `SetResources`) means the first DDS call dereferenc
 
 ## Building the DDS static library
 
-- The static library `dds.lib` for Windows is shipped with the bindings in [`./lib`](./lib).
-- It is a **self-contained** static archive: no `dds.dll` and no `VCOMP140.DLL` (OpenMP) to ship — the whole solver
-	folds into your one Odin executable. DDS runs its Windows-native (WinAPI) threading, so dropping OpenMP loses nothing
-	here.
-- The build script lives in [`src/build.cmd`](./src/build.cmd) (MSVC `cl` + `lib`). It compiles the DDS sources
-	(2.9.1 code, pinned commit `7219c95`) from the `external/dds` submodule with `/MT` (static CRT, to match Odin's
-	`libcmt` host) and archives them.
+The pre-built static libraries are shipped with the bindings in [`./lib`](./lib):
 
-Rebuild it with:
+| Platform | File | Built by |
+| -------- | ---- | -------- |
+| Windows | `lib/dds.lib` | [`src/build.cmd`](./src/build.cmd) (MSVC `cl` + `lib`) |
+| Linux / BSD | `lib/dds.a` | [`src/Makefile`](./src/Makefile) (`g++` + `ar`) |
+| macOS | `lib/darwin/dds.a` | [`src/Makefile`](./src/Makefile) (`clang++` + `ar`) |
+
+All are **self-contained** static archives — the whole solver folds into your one Odin executable with no shared libraries to ship. Each platform uses its native threading: WinAPI on Windows, GCD on macOS, STL on Linux (no OpenMP dependency). The Odin bindings pull in `libstdc++` and `libpthread` on Linux/BSD automatically via `foreign import`.
+
+Rebuild with:
 
 ```
 just build-lib
 ```
 
-This checks out the submodule if needed, runs `src/build.cmd lib external/dds`, and stages `dds.lib` into `./lib`.
-`src/build.cmd` also has a `dll` mode (`src/build.cmd dll external/dds`) if you prefer a DLL — the script's header
-comment weighs the static-vs-DLL trade-offs in depth.
+On Windows this runs `src/build.cmd lib external/dds` (requires MSVC; auto-detected via `vswhere`) and stages `lib/dds.lib`. On Unix it runs `make -C src` and stages `lib/dds.a` or `lib/darwin/dds.a`. The submodule is checked out if needed.
 
-> On a static Windows link there is no `DllMain` auto-init, so consumers must call `SetMaxThreads(0)` once (see above).
-> The DLL build auto-initializes but then requires shipping `dds.dll` (+ `VCOMP140.DLL`) alongside the executable.
+`src/build.cmd` also has a `dll` mode (`src/build.cmd dll external/dds`) if you prefer a DLL on Windows — the script's header comment weighs the static-vs-DLL trade-offs in depth.
+
+> Static linking has no `DllMain`/constructor auto-init, so consumers must call `SetMaxThreads(0)` once before any other DDS call (see above). The DLL build auto-initializes but then requires shipping `dds.dll` (+ `VCOMP140.DLL`) alongside the executable.
 
 
 ## Regenerating the bindings

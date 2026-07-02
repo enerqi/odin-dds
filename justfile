@@ -54,16 +54,31 @@ lint *args:
 # (-keep-executable so `rerun_debug` can skip recompiling)
 # ---
 # run an example (default smoke); e.g. `just run solve_board`
+[unix]
+run_debug name="smoke" *args: mktarget_dirs
+	odin run examples/{{name}}.odin -file -debug -microarch:native -show-timings -keep-executable -out:target/debug/{{name}}.exe {{args}}
+
+[windows]
 run_debug name="smoke" *args: mktarget_dirs
 	odin run examples/{{name}}.odin -file -debug -microarch:native -show-timings -keep-executable -out:target/debug/{{name}}.exe {{args}}
 
 alias run := run_debug
 
 # run an example with debug + optimizations (-keep-executable so `rerun_fastdebug` can skip recompiling)
+[unix]
+run_fastdebug name="smoke" *args: mktarget_dirs
+	odin run examples/{{name}}.odin -file -debug -o:speed -microarch:native -show-timings -keep-executable -out:target/fastdebug/{{name}}.exe {{args}}
+
+[windows]
 run_fastdebug name="smoke" *args: mktarget_dirs
 	odin run examples/{{name}}.odin -file -debug -o:speed -microarch:native -show-timings -keep-executable -out:target/fastdebug/{{name}}.exe {{args}}
 
 # run an example with optimizations (-keep-executable so `rerun_release` can skip recompiling)
+[unix]
+run_release name="smoke" *args: mktarget_dirs
+	odin run examples/{{name}}.odin -file -o:speed -microarch:native -show-timings -keep-executable -out:target/release/{{name}}.exe {{args}}
+
+[windows]
 run_release name="smoke" *args: mktarget_dirs
 	odin run examples/{{name}}.odin -file -o:speed -microarch:native -show-timings -keep-executable -out:target/release/{{name}}.exe {{args}}
 
@@ -110,6 +125,11 @@ test *args: mktarget_dirs
 # `test` recipe for why (DDS FreeMemory is process-global).
 # ---
 # run one example's tests (e.g. `just test1 solve_board`)
+[unix]
+test1 name *args: mktarget_dirs
+	odin test examples/{{name}}.odin -file -debug -microarch:native -show-timings -define:ODIN_TEST_THREADS=1 -out:target/debug/{{test_main_name}} {{args}}
+
+[windows]
 test1 name *args: mktarget_dirs
 	odin test examples/{{name}}.odin -file -debug -microarch:native -show-timings -define:ODIN_TEST_THREADS=1 -out:target/debug/{{test_main_name}} {{args}}
 
@@ -130,19 +150,16 @@ diagnose name="smoke" *args: mktarget_dirs
 	odin build examples/{{name}}.odin -file -debug -microarch:native -show-more-timings -show-debug-messages -show-timings -out:target/debug/{{name}}.exe {{args}}
 
 
-# Static, not DLL: Odin runs C++ ctors (entry=mainCRTStartup) so the static archive links and
-# self-contains into one exe (no dds.dll / VCOMP140.DLL to ship). Trade-off: DDS's DllMain
-# auto-init does NOT run when statically linked -> consumers must call SetMaxThreads(0) once
-# before use (see src/prelude.odin and example/main.odin).
+# Static, not DLL: the archive links and self-contains into one exe. Trade-off: DDS's DllMain/
+# constructor auto-init does NOT run when statically linked -> consumers must call
+# SetMaxThreads(0) once before use (see src/prelude.odin and examples/smoke.odin).
+# Windows: src/build.cmd (MSVC cl+lib), stages lib/dds.lib.
+# Unix:    src/Makefile  (g++/clang++ ar), stages lib/dds.a (Linux) or lib/darwin/dds.a (macOS).
 # ---
 # build the self-contained DDS static lib and stage it into ./lib
 [unix]
 build-lib: submodules
 	make -C src
-	# TODO: src/Makefile (Unix/macOS) not written yet. Model it on odin-yyjson's src/Makefile,
-	# built from external/dds/src/Makefile_linux_static (and Makefile_Mac_*_static for darwin).
-	# It must compile the DDS sources (2.9.1 code, pinned commit 7219c95) and stage lib/dds.a
-	# (+ lib/darwin/dds.a on macOS), matching the paths src/prelude.odin expects.
 
 # build the self-contained DDS static lib and stage it into ./lib
 [windows]

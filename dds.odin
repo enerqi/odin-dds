@@ -21,16 +21,16 @@ when ODIN_OS == .Windows {
 	foreign import lib "lib/dds.lib"
 } else when ODIN_OS == .Linux || ODIN_OS == .FreeBSD || ODIN_OS == .OpenBSD || ODIN_OS == .NetBSD {
 	when !#exists("lib/dds.a") {
-		#panic("Cannot find compiled dds libraries ./lib/dds.a. Compile by running `make -C src`")
+		#panic("Cannot find compiled dds libraries ./lib/dds.a. Compile by running `just build-lib`")
 	}
-	foreign import lib "lib/dds.a"
+	foreign import lib {"lib/dds.a", "system:stdc++", "system:pthread"}
 } else when ODIN_OS == .Darwin {
 	when !#exists("lib/darwin/dds.a") {
 		#panic(
-			"Cannot find compiled dds libraries ./lib/darwin/dds.a for ODIN_OS.Darwin. Compile by running `make -C src`",
+			"Cannot find compiled dds libraries ./lib/darwin/dds.a for ODIN_OS.Darwin. Compile by running `just build-lib`",
 		)
 	}
-	foreign import lib "lib/darwin/dds.a"
+	foreign import lib {"lib/darwin/dds.a", "system:c++"}
 } else {
 	// Unknown OS. Fallback to searching for a global system installed library (also c.f. LD_LIBRARY_PATH)
 	foreign import lib "system:dds"
