@@ -24,11 +24,11 @@ main :: proc() {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		deal: dds.Deal
 		deal.trump = hands.TRUMP[handno]
 		deal.first = hands.FIRST[handno]
-		deal.remainCards = hands.DEALS[handno]
+		deal.remainCards = cards
 
 		play := hands.play_trace_bin(hands.PLAY_PBN[handno])
 		solved: dds.Solved_Play

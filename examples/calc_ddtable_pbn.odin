@@ -17,9 +17,9 @@ main :: proc() {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	for handno in 0 ..< len(hands.PBN) {
+	for pbn, handno in hands.PBN {
 		table_deal_pbn: dds.Table_Deal_Pbn
-		hands.set_chars(table_deal_pbn.cards[:], hands.PBN[handno])
+		hands.set_chars(table_deal_pbn.cards[:], pbn)
 
 		table_results: dds.Table_Results
 		if rc := dds.CalcDDtablePBN(table_deal_pbn, &table_results); rc != .NO_FAULT {
@@ -27,7 +27,7 @@ main :: proc() {
 			continue
 		}
 
-		hands.print_pbn_hand(fmt.tprintf("CalcDDtablePBN, hand %d", handno + 1), hands.PBN[handno])
+		hands.print_pbn_hand(fmt.tprintf("CalcDDtablePBN, hand %d", handno + 1), pbn)
 		hands.print_table(&table_results)
 		fmt.println()
 	}

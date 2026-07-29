@@ -31,11 +31,11 @@ main :: proc() {
 	dds.SetMaxThreads() // required one-time init (default 0 = auto thread count)
 	defer dds.FreeMemory()
 
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		deal: dds.Deal
 		deal.trump = hands.TRUMP[handno]
 		deal.first = hands.FIRST[handno]
-		deal.remainCards = hands.DEALS[handno] // [Hand][Suit] already matches remainCards
+		deal.remainCards = cards // [Hand][Suit] already matches remainCards
 
 		// solutions = .All: return EVERY playable card for the hand on lead, each annotated with the
 		// tricks it yields -- shows how much a suboptimal card costs. target = TARGET_FIND_MAX (find

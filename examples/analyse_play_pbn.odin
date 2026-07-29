@@ -17,11 +17,11 @@ main :: proc() {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	for handno in 0 ..< len(hands.PBN) {
+	for pbn, handno in hands.PBN {
 		deal_pbn: dds.Deal_Pbn
 		deal_pbn.trump = hands.TRUMP[handno]
 		deal_pbn.first = hands.FIRST[handno]
-		hands.set_chars(deal_pbn.remainCards[:], hands.PBN[handno])
+		hands.set_chars(deal_pbn.remainCards[:], pbn)
 
 		play := hands.play_trace_pbn(hands.PLAY_PBN[handno])
 		solved: dds.Solved_Play
@@ -30,7 +30,7 @@ main :: proc() {
 			continue
 		}
 
-		hands.print_pbn_hand(fmt.tprintf("AnalysePlayPBN, hand %d", handno + 1), hands.PBN[handno])
+		hands.print_pbn_hand(fmt.tprintf("AnalysePlayPBN, hand %d", handno + 1), pbn)
 		hands.print_solved_play(&solved)
 		fmt.println()
 	}

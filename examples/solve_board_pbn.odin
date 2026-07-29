@@ -22,11 +22,11 @@ main :: proc() {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	for handno in 0 ..< len(hands.PBN) {
+	for pbn, handno in hands.PBN {
 		deal_pbn: dds.Deal_Pbn
 		deal_pbn.trump = hands.TRUMP[handno]
 		deal_pbn.first = hands.FIRST[handno]
-		hands.set_chars(deal_pbn.remainCards[:], hands.PBN[handno])
+		hands.set_chars(deal_pbn.remainCards[:], pbn)
 
 		future_all: dds.Future_Tricks
 		if rc := dds.SolveBoardPBN(deal_pbn, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &future_all);
@@ -42,7 +42,7 @@ main :: proc() {
 			continue
 		}
 
-		hands.print_pbn_hand(fmt.tprintf("SolveBoardPBN, hand %d", handno + 1), hands.PBN[handno])
+		hands.print_pbn_hand(fmt.tprintf("SolveBoardPBN, hand %d", handno + 1), pbn)
 		hands.print_future_tricks("solutions = All (every card + score)", &future_all)
 		hands.print_future_tricks("solutions = All_Optimal (best cards only)", &future_optimal)
 		fmt.println()

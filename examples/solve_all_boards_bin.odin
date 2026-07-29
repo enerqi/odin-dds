@@ -24,10 +24,10 @@ main :: proc() {
 
 	boards: dds.Boards
 	boards.noOfBoards = i32(len(hands.DEALS))
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		boards.deals[handno].trump = hands.TRUMP[handno]
 		boards.deals[handno].first = hands.FIRST[handno]
-		boards.deals[handno].remainCards = hands.DEALS[handno]
+		boards.deals[handno].remainCards = cards
 		boards.target[handno] = dds.TARGET_FIND_MAX
 		boards.solutions[handno] = .All
 		boards.mode[handno] = .Auto_Skip_Single
@@ -39,8 +39,8 @@ main :: proc() {
 		return
 	}
 
-	for handno in 0 ..< len(hands.DEALS) {
-		hands.print_hand(fmt.tprintf("SolveAllBoardsBin, hand %d", handno + 1), hands.DEALS[handno])
+	for cards, handno in hands.DEALS {
+		hands.print_hand(fmt.tprintf("SolveAllBoardsBin, hand %d", handno + 1), cards)
 		hands.print_future_tricks("solutions = All (every card + score)", &solved.solvedBoard[handno])
 		fmt.println()
 	}
@@ -55,10 +55,10 @@ test_solve_all_boards_bin :: proc(t: ^testing.T) {
 
 	boards: dds.Boards
 	boards.noOfBoards = i32(len(hands.DEALS))
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		boards.deals[handno].trump = hands.TRUMP[handno]
 		boards.deals[handno].first = hands.FIRST[handno]
-		boards.deals[handno].remainCards = hands.DEALS[handno]
+		boards.deals[handno].remainCards = cards
 		boards.target[handno] = dds.TARGET_FIND_MAX
 		boards.solutions[handno] = .All
 		boards.mode[handno] = .Auto_Skip_Single

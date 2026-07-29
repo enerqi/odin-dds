@@ -24,9 +24,9 @@ main :: proc() {
 	dds.SetMaxThreads() // required one-time init (default 0 = auto thread count)
 	defer dds.FreeMemory()
 
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		table_deal: dds.Table_Deal
-		table_deal.cards = hands.DEALS[handno] // [Hand][Suit] matches ddTableDeal.cards
+		table_deal.cards = cards // [Hand][Suit] matches ddTableDeal.cards
 
 		table_results: dds.Table_Results
 		if rc := dds.CalcDDtable(table_deal, &table_results); rc != .NO_FAULT {

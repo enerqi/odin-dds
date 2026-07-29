@@ -20,10 +20,10 @@ main :: proc() {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		// Binary deal -> CalcPar gives table + par together.
 		table_deal: dds.Table_Deal
-		table_deal.cards = hands.DEALS[handno]
+		table_deal.cards = cards
 		table_results: dds.Table_Results
 		par_results: dds.Par_Results
 		if rc := dds.CalcPar(table_deal, hands.VUL[handno], &table_results, &par_results); rc != .NO_FAULT {

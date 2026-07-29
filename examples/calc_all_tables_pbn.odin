@@ -19,8 +19,8 @@ main :: proc() {
 
 	deals: dds.Table_Deals_Pbn
 	deals.noOfTables = i32(len(hands.PBN))
-	for handno in 0 ..< len(hands.PBN) {
-		hands.set_chars(deals.deals[handno].cards[:], hands.PBN[handno])
+	for pbn, handno in hands.PBN {
+		hands.set_chars(deals.deals[handno].cards[:], pbn)
 	}
 
 	filter: [dds.Strain]b32
@@ -31,8 +31,8 @@ main :: proc() {
 		return
 	}
 
-	for handno in 0 ..< len(hands.PBN) {
-		hands.print_pbn_hand(fmt.tprintf("CalcAllTablesPBN, hand %d", handno + 1), hands.PBN[handno])
+	for pbn, handno in hands.PBN {
+		hands.print_pbn_hand(fmt.tprintf("CalcAllTablesPBN, hand %d", handno + 1), pbn)
 		hands.print_table(&tables_res.results[handno])
 		fmt.println()
 	}
@@ -46,8 +46,8 @@ test_calc_all_tables_pbn :: proc(t: ^testing.T) {
 
 	deals: dds.Table_Deals_Pbn
 	deals.noOfTables = i32(len(hands.PBN))
-	for handno in 0 ..< len(hands.PBN) {
-		hands.set_chars(deals.deals[handno].cards[:], hands.PBN[handno])
+	for pbn, handno in hands.PBN {
+		hands.set_chars(deals.deals[handno].cards[:], pbn)
 	}
 
 	filter: [dds.Strain]b32

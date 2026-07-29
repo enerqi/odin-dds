@@ -28,8 +28,8 @@ main :: proc() {
 
 	deals: dds.Table_Deals
 	deals.noOfTables = i32(len(hands.DEALS))
-	for handno in 0 ..< len(hands.DEALS) {
-		deals.deals[handno].cards = hands.DEALS[handno]
+	for cards, handno in hands.DEALS {
+		deals.deals[handno].cards = cards
 	}
 
 	// trumpFilter is per-strain "exclude" flags; all false = compute every strain.
@@ -41,8 +41,8 @@ main :: proc() {
 		return
 	}
 
-	for handno in 0 ..< len(hands.DEALS) {
-		hands.print_hand(fmt.tprintf("CalcAllTables, hand %d", handno + 1), hands.DEALS[handno])
+	for cards, handno in hands.DEALS {
+		hands.print_hand(fmt.tprintf("CalcAllTables, hand %d", handno + 1), cards)
 		hands.print_table(&tables_res.results[handno])
 		fmt.println()
 	}
@@ -56,8 +56,8 @@ test_calc_all_tables :: proc(t: ^testing.T) {
 
 	deals: dds.Table_Deals
 	deals.noOfTables = i32(len(hands.DEALS))
-	for handno in 0 ..< len(hands.DEALS) {
-		deals.deals[handno].cards = hands.DEALS[handno]
+	for cards, handno in hands.DEALS {
+		deals.deals[handno].cards = cards
 	}
 
 	filter: [dds.Strain]b32

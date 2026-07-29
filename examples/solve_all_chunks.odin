@@ -27,10 +27,10 @@ main :: proc() {
 	// Binary batch via SolveAllChunksBin.
 	boards: dds.Boards
 	boards.noOfBoards = i32(len(hands.DEALS))
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		boards.deals[handno].trump = hands.TRUMP[handno]
 		boards.deals[handno].first = hands.FIRST[handno]
-		boards.deals[handno].remainCards = hands.DEALS[handno]
+		boards.deals[handno].remainCards = cards
 		boards.target[handno] = dds.TARGET_FIND_MAX
 		boards.solutions[handno] = .All
 		boards.mode[handno] = .Auto_Skip_Single
@@ -41,8 +41,8 @@ main :: proc() {
 		fmt.eprintln("SolveAllChunksBin failed:", dds.error_message(rc))
 		return
 	}
-	for handno in 0 ..< len(hands.DEALS) {
-		hands.print_hand(fmt.tprintf("SolveAllChunksBin, hand %d", handno + 1), hands.DEALS[handno])
+	for cards, handno in hands.DEALS {
+		hands.print_hand(fmt.tprintf("SolveAllChunksBin, hand %d", handno + 1), cards)
 		hands.print_future_tricks("solutions = All (every card + score)", &solved.solvedBoard[handno])
 		fmt.println()
 	}
@@ -50,10 +50,10 @@ main :: proc() {
 	// The PBN-input equivalents (SolveAllChunksPBN, and the legacy alias SolveAllChunks) take Boards_Pbn.
 	boards_pbn: dds.Boards_Pbn
 	boards_pbn.noOfBoards = i32(len(hands.PBN))
-	for handno in 0 ..< len(hands.PBN) {
+	for pbn, handno in hands.PBN {
 		boards_pbn.deals[handno].trump = hands.TRUMP[handno]
 		boards_pbn.deals[handno].first = hands.FIRST[handno]
-		hands.set_chars(boards_pbn.deals[handno].remainCards[:], hands.PBN[handno])
+		hands.set_chars(boards_pbn.deals[handno].remainCards[:], pbn)
 		boards_pbn.target[handno] = dds.TARGET_FIND_MAX
 		boards_pbn.solutions[handno] = .All
 		boards_pbn.mode[handno] = .Auto_Skip_Single
@@ -78,10 +78,10 @@ test_solve_all_chunks :: proc(t: ^testing.T) {
 
 	boards: dds.Boards
 	boards.noOfBoards = i32(len(hands.DEALS))
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		boards.deals[handno].trump = hands.TRUMP[handno]
 		boards.deals[handno].first = hands.FIRST[handno]
-		boards.deals[handno].remainCards = hands.DEALS[handno]
+		boards.deals[handno].remainCards = cards
 		boards.target[handno] = dds.TARGET_FIND_MAX
 		boards.solutions[handno] = .All
 		boards.mode[handno] = .Auto_Skip_Single

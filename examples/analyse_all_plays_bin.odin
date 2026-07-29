@@ -24,10 +24,10 @@ main :: proc() {
 	boards.noOfBoards = i32(len(hands.DEALS))
 	plays.noOfBoards = i32(len(hands.DEALS))
 
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		boards.deals[handno].trump = hands.TRUMP[handno]
 		boards.deals[handno].first = hands.FIRST[handno]
-		boards.deals[handno].remainCards = hands.DEALS[handno]
+		boards.deals[handno].remainCards = cards
 		plays.plays[handno] = hands.play_trace_bin(hands.PLAY_PBN[handno])
 	}
 
@@ -37,8 +37,8 @@ main :: proc() {
 		return
 	}
 
-	for handno in 0 ..< len(hands.DEALS) {
-		hands.print_hand(fmt.tprintf("AnalyseAllPlaysBin, hand %d", handno + 1), hands.DEALS[handno])
+	for cards, handno in hands.DEALS {
+		hands.print_hand(fmt.tprintf("AnalyseAllPlaysBin, hand %d", handno + 1), cards)
 		hands.print_solved_play(&solved.solved[handno])
 		fmt.println()
 	}

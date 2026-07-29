@@ -19,9 +19,9 @@ main :: proc() {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	for handno in 0 ..< len(hands.DEALS) {
+	for cards, handno in hands.DEALS {
 		table_deal: dds.Table_Deal
-		table_deal.cards = hands.DEALS[handno]
+		table_deal.cards = cards
 		table_results: dds.Table_Results
 		if rc := dds.CalcDDtable(table_deal, &table_results); rc != .NO_FAULT {
 			fmt.eprintln("CalcDDtable failed:", dds.error_message(rc))
