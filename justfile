@@ -3,6 +3,8 @@ set shell := ["bash", "-c"]
 
 test_main_name := "test-main.exe"
 
+# Note avoids `odinfmt -w .` as prelude.odin is an incomplete template, no properly parseable
+# ---
 # odinfmt the generated bindings + every example source (src/prelude.odin has no package line, so skip)
 [unix]
 format:
@@ -12,6 +14,9 @@ format:
 # odinfmt ignores .editorconfig end_of_line=lf and writes CRLF on Windows, re-dirtying the working tree
 # (index stays LF via .gitattributes, so it shows as a spurious line-endings-changed diff). Convert back
 # to LF after formatting so the working tree matches the index.
+# Note avoids `odinfmt -w .` as prelude.odin is an incomplete template, no properly parseable
+# ---
+# odinfmt the generated bindings + every example source (src/prelude.odin has no package line, so skip)
 [windows]
 format:
 	odinfmt -w dds.odin
@@ -49,6 +54,9 @@ lint *args:
 [windows]
 @mktarget_dirs:
 	New-Item -ItemType Directory -Force target, target/debug, target/fastdebug, target/release | Out-Null
+
+# both formatting and lint
+qa: format lint
 
 # run an example (examples/<name>.odin, default smoke) as a single-file program
 # (-keep-executable so `rerun_debug` can skip recompiling)

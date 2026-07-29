@@ -25,19 +25,19 @@ main :: proc() {
 	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.DEALS) {
-		dl: dds.Deal
-		dl.trump = hands.TRUMP[handno]
-		dl.first = hands.FIRST[handno]
-		dl.remainCards = hands.DEALS[handno]
+		deal: dds.Deal
+		deal.trump = hands.TRUMP[handno]
+		deal.first = hands.FIRST[handno]
+		deal.remainCards = hands.DEALS[handno]
 
 		play := hands.play_trace_bin(hands.PLAY_PBN[handno])
 		solved: dds.Solved_Play
-		if rc := dds.AnalysePlayBin(dl, play, &solved); rc != .NO_FAULT {
+		if rc := dds.AnalysePlayBin(deal, play, &solved); rc != .NO_FAULT {
 			fmt.eprintln("AnalysePlayBin failed:", dds.error_message(rc))
 			continue
 		}
 
-		hands.print_hand(fmt.tprintf("AnalysePlayBin, hand %d", handno + 1), dl.remainCards)
+		hands.print_hand(fmt.tprintf("AnalysePlayBin, hand %d", handno + 1), deal.remainCards)
 		hands.print_solved_play(&solved)
 		fmt.println()
 	}

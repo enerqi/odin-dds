@@ -8,8 +8,9 @@
 // Extra parameters beyond a plain table:
 //   - trumpFilter: a per-strain "exclude" flag ([Strain]b32). All-false (as here) computes every
 //     strain; set an entry true to skip that strain and save time if you don't need it.
-//   - mode + presp: mode carries a Vulnerability for an optional par calculation written into presp.
-//     The C example passes mode = 0; presp must still be provided even when par isn't wanted.
+//   - mode + an All_Par_Results out-param: mode carries a Vulnerability for an optional par calculation,
+//     written into that out-param. The C example passes mode = 0; the out-param must still be supplied
+//     even when par isn't wanted.
 // Output (dds.Tables_Res): results[i] is the Table_Results for the i-th input deal.
 //
 // Run:  just run calc_all_tables
@@ -33,16 +34,16 @@ main :: proc() {
 
 	// trumpFilter is per-strain "exclude" flags; all false = compute every strain.
 	filter: [dds.Strain]b32
-	res: dds.Tables_Res
-	par: dds.All_Par_Results // required output even when no par is requested (mode = 0, as in the C example)
-	if rc := dds.CalcAllTables(&deals, 0, &filter, &res, &par); rc != .NO_FAULT {
+	tables_res: dds.Tables_Res
+	all_par_results: dds.All_Par_Results // required output even when no par is requested (mode = 0, as in the C example)
+	if rc := dds.CalcAllTables(&deals, 0, &filter, &tables_res, &all_par_results); rc != .NO_FAULT {
 		fmt.eprintln("CalcAllTables failed:", dds.error_message(rc))
 		return
 	}
 
 	for handno in 0 ..< len(hands.DEALS) {
 		hands.print_hand(fmt.tprintf("CalcAllTables, hand %d", handno + 1), hands.DEALS[handno])
-		hands.print_table(&res.results[handno])
+		hands.print_table(&tables_res.results[handno])
 		fmt.println()
 	}
 }
@@ -60,8 +61,12 @@ test_calc_all_tables :: proc(t: ^testing.T) {
 	}
 
 	filter: [dds.Strain]b32
-	res: dds.Tables_Res
-	par: dds.All_Par_Results
-	testing.expect_value(t, dds.CalcAllTables(&deals, 0, &filter, &res, &par), dds.Return_Code.NO_FAULT)
-	hands.expect_table(t, &res.results[0], hands.DDTABLE_0)
+	tables_res: dds.Tables_Res
+	all_par_results: dds.All_Par_Results
+	testing.expect_value(
+		t,
+		dds.CalcAllTables(&deals, 0, &filter, &tables_res, &all_par_results),
+		dds.Return_Code.NO_FAULT,
+	)
+	hands.expect_table(t, &tables_res.results[0], hands.DDTABLE_0)
 }

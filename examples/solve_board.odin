@@ -32,30 +32,31 @@ main :: proc() {
 	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.DEALS) {
-		dl: dds.Deal
-		dl.trump = hands.TRUMP[handno]
-		dl.first = hands.FIRST[handno]
-		dl.remainCards = hands.DEALS[handno] // [Hand][Suit] already matches remainCards
+		deal: dds.Deal
+		deal.trump = hands.TRUMP[handno]
+		deal.first = hands.FIRST[handno]
+		deal.remainCards = hands.DEALS[handno] // [Hand][Suit] already matches remainCards
 
 		// solutions = .All: return EVERY playable card for the hand on lead, each annotated with the
 		// tricks it yields -- shows how much a suboptimal card costs. target = TARGET_FIND_MAX (find
 		// the best), threadIndex defaults to 0.
-		fut3: dds.Future_Tricks
-		if rc := dds.SolveBoard(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut3); rc != .NO_FAULT {
+		future_all: dds.Future_Tricks
+		if rc := dds.SolveBoard(deal, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &future_all); rc != .NO_FAULT {
 			fmt.eprintln("SolveBoard failed:", dds.error_message(rc))
 			continue
 		}
 
 		// solutions = .All_Optimal: return only the cards that reach the maximum -- the equally-best plays.
-		fut2: dds.Future_Tricks
-		if rc := dds.SolveBoard(dl, dds.TARGET_FIND_MAX, .All_Optimal, .Auto_Skip_Single, &fut2); rc != .NO_FAULT {
+		future_optimal: dds.Future_Tricks
+		if rc := dds.SolveBoard(deal, dds.TARGET_FIND_MAX, .All_Optimal, .Auto_Skip_Single, &future_optimal);
+		   rc != .NO_FAULT {
 			fmt.eprintln("SolveBoard failed:", dds.error_message(rc))
 			continue
 		}
 
-		hands.print_hand(fmt.tprintf("SolveBoard, hand %d", handno + 1), dl.remainCards)
-		hands.print_fut("solutions = All (every card + score)", &fut3)
-		hands.print_fut("solutions = All_Optimal (best cards only)", &fut2)
+		hands.print_hand(fmt.tprintf("SolveBoard, hand %d", handno + 1), deal.remainCards)
+		hands.print_future_tricks("solutions = All (every card + score)", &future_all)
+		hands.print_future_tricks("solutions = All_Optimal (best cards only)", &future_optimal)
 		fmt.println()
 	}
 }
@@ -67,17 +68,17 @@ test_solve_board :: proc(t: ^testing.T) {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	dl: dds.Deal
-	dl.trump = hands.TRUMP[0]
-	dl.first = hands.FIRST[0]
-	dl.remainCards = hands.DEALS[0]
+	deal: dds.Deal
+	deal.trump = hands.TRUMP[0]
+	deal.first = hands.FIRST[0]
+	deal.remainCards = hands.DEALS[0]
 
-	fut: dds.Future_Tricks
+	future_tricks: dds.Future_Tricks
 	testing.expect_value(
 		t,
-		dds.SolveBoard(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut),
+		dds.SolveBoard(deal, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &future_tricks),
 		dds.Return_Code.NO_FAULT,
 	)
-	testing.expect(t, fut.cards > 0)
-	testing.expect_value(t, fut.score[0], 5) // best card yields 5 tricks
+	testing.expect(t, future_tricks.cards > 0)
+	testing.expect_value(t, future_tricks.score[0], 5) // best card yields 5 tricks
 }

@@ -24,16 +24,16 @@ main :: proc() {
 	}
 
 	filter: [dds.Strain]b32
-	res: dds.Tables_Res
-	par: dds.All_Par_Results
-	if rc := dds.CalcAllTablesPBN(&deals, 0, &filter, &res, &par); rc != .NO_FAULT {
+	tables_res: dds.Tables_Res
+	all_par_results: dds.All_Par_Results
+	if rc := dds.CalcAllTablesPBN(&deals, 0, &filter, &tables_res, &all_par_results); rc != .NO_FAULT {
 		fmt.eprintln("CalcAllTablesPBN failed:", dds.error_message(rc))
 		return
 	}
 
 	for handno in 0 ..< len(hands.PBN) {
 		hands.print_pbn_hand(fmt.tprintf("CalcAllTablesPBN, hand %d", handno + 1), hands.PBN[handno])
-		hands.print_table(&res.results[handno])
+		hands.print_table(&tables_res.results[handno])
 		fmt.println()
 	}
 }
@@ -51,8 +51,12 @@ test_calc_all_tables_pbn :: proc(t: ^testing.T) {
 	}
 
 	filter: [dds.Strain]b32
-	res: dds.Tables_Res
-	par: dds.All_Par_Results
-	testing.expect_value(t, dds.CalcAllTablesPBN(&deals, 0, &filter, &res, &par), dds.Return_Code.NO_FAULT)
-	hands.expect_table(t, &res.results[0], hands.DDTABLE_0)
+	tables_res: dds.Tables_Res
+	all_par_results: dds.All_Par_Results
+	testing.expect_value(
+		t,
+		dds.CalcAllTablesPBN(&deals, 0, &filter, &tables_res, &all_par_results),
+		dds.Return_Code.NO_FAULT,
+	)
+	hands.expect_table(t, &tables_res.results[0], hands.DDTABLE_0)
 }

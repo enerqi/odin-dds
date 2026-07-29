@@ -23,10 +23,10 @@ main :: proc() {
 	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.DEALS) {
-		td: dds.Table_Deal
-		td.cards = hands.DEALS[handno]
-		table: dds.Table_Results
-		if rc := dds.CalcDDtable(td, &table); rc != .NO_FAULT {
+		table_deal: dds.Table_Deal
+		table_deal.cards = hands.DEALS[handno]
+		table_results: dds.Table_Results
+		if rc := dds.CalcDDtable(table_deal, &table_results); rc != .NO_FAULT {
 			fmt.eprintln("CalcDDtable failed:", dds.error_message(rc))
 			continue
 		}
@@ -35,7 +35,7 @@ main :: proc() {
 
 		// Text form: one Par_Results_Dealer per side.
 		sides: [2]dds.Par_Results_Dealer
-		if rc := dds.SidesPar(&table, &sides, hands.VUL[handno]); rc != .NO_FAULT {
+		if rc := dds.SidesPar(&table_results, &sides, hands.VUL[handno]); rc != .NO_FAULT {
 			fmt.eprintln("SidesPar failed:", dds.error_message(rc))
 			continue
 		}
@@ -46,17 +46,17 @@ main :: proc() {
 
 		// Structured form + text conversion.
 		sides_bin: [2]dds.Par_Results_Master
-		if rc := dds.SidesParBin(&table, &sides_bin, hands.VUL[handno]); rc != .NO_FAULT {
+		if rc := dds.SidesParBin(&table_results, &sides_bin, hands.VUL[handno]); rc != .NO_FAULT {
 			fmt.eprintln("SidesParBin failed:", dds.error_message(rc))
 			continue
 		}
-		text: dds.Par_Text_Results
-		if rc := dds.ConvertToSidesTextFormat(&sides_bin[0], &text); rc != .NO_FAULT {
+		par_text_results: dds.Par_Text_Results
+		if rc := dds.ConvertToSidesTextFormat(&sides_bin[0], &par_text_results); rc != .NO_FAULT {
 			fmt.eprintln("ConvertToSidesTextFormat failed:", dds.error_message(rc))
 			continue
 		}
 		fmt.println("  ConvertToSidesTextFormat:")
-		hands.print_par_text(&text)
+		hands.print_par_text(&par_text_results)
 		fmt.println()
 	}
 }

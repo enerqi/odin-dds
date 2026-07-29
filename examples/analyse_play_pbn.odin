@@ -18,14 +18,14 @@ main :: proc() {
 	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.PBN) {
-		dl: dds.Deal_Pbn
-		dl.trump = hands.TRUMP[handno]
-		dl.first = hands.FIRST[handno]
-		hands.set_chars(dl.remainCards[:], hands.PBN[handno])
+		deal_pbn: dds.Deal_Pbn
+		deal_pbn.trump = hands.TRUMP[handno]
+		deal_pbn.first = hands.FIRST[handno]
+		hands.set_chars(deal_pbn.remainCards[:], hands.PBN[handno])
 
 		play := hands.play_trace_pbn(hands.PLAY_PBN[handno])
 		solved: dds.Solved_Play
-		if rc := dds.AnalysePlayPBN(dl, play, &solved); rc != .NO_FAULT {
+		if rc := dds.AnalysePlayPBN(deal_pbn, play, &solved); rc != .NO_FAULT {
 			fmt.eprintln("AnalysePlayPBN failed:", dds.error_message(rc))
 			continue
 		}

@@ -20,26 +20,27 @@ main :: proc() {
 	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.DEALS) {
-		td: dds.Table_Deal
-		td.cards = hands.DEALS[handno]
-		table: dds.Table_Results
-		if rc := dds.CalcDDtable(td, &table); rc != .NO_FAULT {
+		table_deal: dds.Table_Deal
+		table_deal.cards = hands.DEALS[handno]
+		table_results: dds.Table_Results
+		if rc := dds.CalcDDtable(table_deal, &table_results); rc != .NO_FAULT {
 			fmt.eprintln("CalcDDtable failed:", dds.error_message(rc))
 			continue
 		}
 
-		pres: dds.Par_Results_Master
-		if rc := dds.DealerParBin(&table, &pres, hands.DEALER[handno], hands.VUL[handno]); rc != .NO_FAULT {
+		par_results_master: dds.Par_Results_Master
+		if rc := dds.DealerParBin(&table_results, &par_results_master, hands.DEALER[handno], hands.VUL[handno]);
+		   rc != .NO_FAULT {
 			fmt.eprintln("DealerParBin failed:", dds.error_message(rc))
 			continue
 		}
 
 		fmt.printfln("DealerParBin, hand %d (dealer %v, vul %v)", handno + 1, hands.DEALER[handno], hands.VUL[handno])
-		hands.print_par_master(&pres)
+		hands.print_par_master(&par_results_master)
 
 		// ConvertToDealerTextFormat writes a null-terminated line into a caller-supplied char buffer.
 		buf: [256]u8
-		if rc := dds.ConvertToDealerTextFormat(&pres, cstring(rawptr(&buf[0]))); rc != .NO_FAULT {
+		if rc := dds.ConvertToDealerTextFormat(&par_results_master, cstring(rawptr(&buf[0]))); rc != .NO_FAULT {
 			fmt.eprintln("ConvertToDealerTextFormat failed:", dds.error_message(rc))
 			continue
 		}

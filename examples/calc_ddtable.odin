@@ -28,20 +28,20 @@ main :: proc() {
 		table_deal: dds.Table_Deal
 		table_deal.cards = hands.DEALS[handno] // [Hand][Suit] matches ddTableDeal.cards
 
-		res: dds.Table_Results
-		if rc := dds.CalcDDtable(table_deal, &res); rc != .NO_FAULT {
+		table_results: dds.Table_Results
+		if rc := dds.CalcDDtable(table_deal, &table_results); rc != .NO_FAULT {
 			fmt.eprintln("CalcDDtable failed:", dds.error_message(rc))
 			continue
 		}
 
 		hands.print_hand(fmt.tprintf("CalcDDtable, hand %d", handno + 1), table_deal.cards)
-		hands.print_table(&res)
+		hands.print_table(&table_results)
 		fmt.println()
 	}
 }
 
 // Same computation as `main` without the printing: solve DEALS[0] and assert its full double-dummy
-// table (strain x declarer), verified against the known result for that board. `just test_examples`
+// table (strain x declarer), verified against the known result for that board. `just test1 calc_ddtable`
 // runs it via `odin test`, which invokes @(test) procs and ignores `main`.
 @(test)
 test_calc_ddtable :: proc(t: ^testing.T) {
@@ -51,7 +51,7 @@ test_calc_ddtable :: proc(t: ^testing.T) {
 	table_deal: dds.Table_Deal
 	table_deal.cards = hands.DEALS[0]
 
-	res: dds.Table_Results
-	testing.expect_value(t, dds.CalcDDtable(table_deal, &res), dds.Return_Code.NO_FAULT)
-	hands.expect_table(t, &res, hands.DDTABLE_0)
+	table_results: dds.Table_Results
+	testing.expect_value(t, dds.CalcDDtable(table_deal, &table_results), dds.Return_Code.NO_FAULT)
+	hands.expect_table(t, &table_results, hands.DDTABLE_0)
 }

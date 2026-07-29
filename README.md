@@ -41,9 +41,9 @@ main :: proc() {
 
 	deal: dds.Deal
 	// ... fill in the deal ...
-	fut: dds.Future_Tricks
+	future_tricks: dds.Future_Tricks
 	// target = TARGET_FIND_MAX (find the best), solutions = .All, mode = .Auto_Skip_Single.
-	dds.SolveBoard(deal, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut)
+	dds.SolveBoard(deal, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &future_tricks)
 }
 ```
 
@@ -53,9 +53,9 @@ Skipping `SetMaxThreads` (or `SetResources`) means the first DDS call dereferenc
 
 ## Version
 
-| odin-dds tag | DDS version           | notes                        |
-| ------------ | --------------------- | ---------------------------- |
-| 2026-07      | 2.9.1 code (`7219c95`) | Initial bindings             |
+| odin-dds tag | DDS version            | notes            |
+| ------------ | ---------------------- | ---------------- |
+| 2026-07      | 2.9.1 code (`7219c95`) | Initial bindings |
 
 > DDS never tagged 2.9.1, so the `external/dds` submodule is pinned to commit **`7219c95`** — the
 > code-complete 2.9.1 point on the flat-layout `include/`+`src/` tree (`DDS_VERSION` upstream is still
@@ -67,13 +67,14 @@ Skipping `SetMaxThreads` (or `SetResources`) means the first DDS call dereferenc
 
 ## Building the DDS static library
 
-The pre-built static libraries are shipped with the bindings in [`./lib`](./lib):
+Pre-built static libraries are shipped with the bindings in [`./lib`](./lib) for Windows and Linux; macOS is
+not pre-built (no build machine), so build it locally with `just build-lib`:
 
-| Platform | File | Built by |
-| -------- | ---- | -------- |
-| Windows | `lib/dds.lib` | [`src/build.cmd`](./src/build.cmd) (MSVC `cl` + `lib`) |
-| Linux / BSD | `lib/dds.a` | [`src/Makefile`](./src/Makefile) (`g++` + `ar`) |
-| macOS | `lib/darwin/dds.a` | [`src/Makefile`](./src/Makefile) (`clang++` + `ar`) |
+| Platform | File | Shipped | Built by |
+| -------- | ---- | ------- | -------- |
+| Windows | `lib/dds.lib` | yes | [`src/build.cmd`](./src/build.cmd) (MSVC `cl` + `lib`) |
+| Linux / BSD | `lib/dds.a` | yes | [`src/Makefile`](./src/Makefile) (`g++` + `ar`) |
+| macOS | `lib/darwin/dds.a` | no — build locally | [`src/Makefile`](./src/Makefile) (`clang++` + `ar`) |
 
 All are **self-contained** static archives — the whole solver folds into your one Odin executable with no shared libraries to ship. Each platform uses its native threading: WinAPI on Windows, GCD on macOS, STL on Linux (no OpenMP dependency). The Odin bindings pull in `libstdc++` and `libpthread` on Linux/BSD automatically via `foreign import`.
 
@@ -85,9 +86,9 @@ just build-lib
 
 On Windows this runs `src/build.cmd lib external/dds` (requires MSVC; auto-detected via `vswhere`) and stages `lib/dds.lib`. On Unix it runs `make -C src` and stages `lib/dds.a` or `lib/darwin/dds.a`. The submodule is checked out if needed.
 
-`src/build.cmd` also has a `dll` mode (`src/build.cmd dll external/dds`) if you prefer a DLL on Windows — the script's header comment weighs the static-vs-DLL trade-offs in depth.
+`src/build.cmd` also has a `dll` mode (`src/build.cmd dll external/dds`) if you prefer a DLL on Windows — the script's header comment weighs the static-vs-DLL trade-offs in depth. [`src/build-v3.cmd`](./src/build-v3.cmd) is an unused-by-default Bazel wrapper kept for experimenting with the DDS 3.0.0 tree; it is not wired into `just build-lib`.
 
-> Static linking has no `DllMain`/constructor auto-init, so consumers must call `SetMaxThreads(0)` once before any other DDS call (see above). The DLL build auto-initializes but then requires shipping `dds.dll` (+ `VCOMP140.DLL`) alongside the executable.
+> Static linking has no `DllMain`/constructor auto-init — these builds define neither `USES_DLLMAIN` nor `USES_CONSTRUCTOR` — so consumers must call `SetMaxThreads(0)` once before any other DDS call (see above). The DLL build auto-initializes but then requires shipping `dds.dll` (+ `VCOMP140.DLL`) alongside the executable.
 
 
 ## Regenerating the bindings
@@ -117,6 +118,7 @@ Tasks are run with [just](https://just.systems/) (`just TASK`); the Windows shel
 - `just run [name]` — build and run an example (`examples/<name>.odin`, default `smoke`); e.g. `just run solve_board`
 - `just lint` — type check + vet + strict style
 - `just format` — `odinfmt -w .`
+- `just qa` — format then lint
 - `just test` — run all tests (they live as `@(test)` procs inside `examples/*.odin`); `just test1 <name>` runs one example's tests
 - `just build-lib` — (re)build and stage the DDS static lib
 - `just bindgen` — regenerate the bindings

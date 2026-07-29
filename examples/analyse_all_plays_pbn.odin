@@ -16,20 +16,20 @@ main :: proc() {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	bo: dds.Boards_Pbn
+	boards: dds.Boards_Pbn
 	plays: dds.Play_Traces_Pbn
-	bo.noOfBoards = i32(len(hands.PBN))
+	boards.noOfBoards = i32(len(hands.PBN))
 	plays.noOfBoards = i32(len(hands.PBN))
 
 	for handno in 0 ..< len(hands.PBN) {
-		bo.deals[handno].trump = hands.TRUMP[handno]
-		bo.deals[handno].first = hands.FIRST[handno]
-		hands.set_chars(bo.deals[handno].remainCards[:], hands.PBN[handno])
+		boards.deals[handno].trump = hands.TRUMP[handno]
+		boards.deals[handno].first = hands.FIRST[handno]
+		hands.set_chars(boards.deals[handno].remainCards[:], hands.PBN[handno])
 		plays.plays[handno] = hands.play_trace_pbn(hands.PLAY_PBN[handno])
 	}
 
 	solved: dds.Solved_Plays
-	if rc := dds.AnalyseAllPlaysPBN(&bo, &plays, &solved); rc != .NO_FAULT {
+	if rc := dds.AnalyseAllPlaysPBN(&boards, &plays, &solved); rc != .NO_FAULT {
 		fmt.eprintln("AnalyseAllPlaysPBN failed:", dds.error_message(rc))
 		return
 	}

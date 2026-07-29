@@ -18,32 +18,32 @@ main :: proc() {
 	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.PBN) {
-		td: dds.Table_Deal_Pbn
-		hands.set_chars(td.cards[:], hands.PBN[handno])
+		table_deal_pbn: dds.Table_Deal_Pbn
+		hands.set_chars(table_deal_pbn.cards[:], hands.PBN[handno])
 
-		res: dds.Table_Results
-		if rc := dds.CalcDDtablePBN(td, &res); rc != .NO_FAULT {
+		table_results: dds.Table_Results
+		if rc := dds.CalcDDtablePBN(table_deal_pbn, &table_results); rc != .NO_FAULT {
 			fmt.eprintln("CalcDDtablePBN failed:", dds.error_message(rc))
 			continue
 		}
 
 		hands.print_pbn_hand(fmt.tprintf("CalcDDtablePBN, hand %d", handno + 1), hands.PBN[handno])
-		hands.print_table(&res)
+		hands.print_table(&table_results)
 		fmt.println()
 	}
 }
 
 // Solve PBN board 0 and assert its full double-dummy table -- must match the binary calc_ddtable result
-// for the same board. `just test_examples` runs this via `odin test`.
+// for the same board. `just test1 calc_ddtable_pbn` runs this via `odin test`.
 @(test)
 test_calc_ddtable_pbn :: proc(t: ^testing.T) {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	td: dds.Table_Deal_Pbn
-	hands.set_chars(td.cards[:], hands.PBN[0])
+	table_deal_pbn: dds.Table_Deal_Pbn
+	hands.set_chars(table_deal_pbn.cards[:], hands.PBN[0])
 
-	res: dds.Table_Results
-	testing.expect_value(t, dds.CalcDDtablePBN(td, &res), dds.Return_Code.NO_FAULT)
-	hands.expect_table(t, &res, hands.DDTABLE_0)
+	table_results: dds.Table_Results
+	testing.expect_value(t, dds.CalcDDtablePBN(table_deal_pbn, &table_results), dds.Return_Code.NO_FAULT)
+	hands.expect_table(t, &table_results, hands.DDTABLE_0)
 }

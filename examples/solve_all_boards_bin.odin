@@ -22,26 +22,26 @@ main :: proc() {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	bo: dds.Boards
-	bo.noOfBoards = i32(len(hands.DEALS))
+	boards: dds.Boards
+	boards.noOfBoards = i32(len(hands.DEALS))
 	for handno in 0 ..< len(hands.DEALS) {
-		bo.deals[handno].trump = hands.TRUMP[handno]
-		bo.deals[handno].first = hands.FIRST[handno]
-		bo.deals[handno].remainCards = hands.DEALS[handno]
-		bo.target[handno] = dds.TARGET_FIND_MAX
-		bo.solutions[handno] = .All
-		bo.mode[handno] = .Auto_Skip_Single
+		boards.deals[handno].trump = hands.TRUMP[handno]
+		boards.deals[handno].first = hands.FIRST[handno]
+		boards.deals[handno].remainCards = hands.DEALS[handno]
+		boards.target[handno] = dds.TARGET_FIND_MAX
+		boards.solutions[handno] = .All
+		boards.mode[handno] = .Auto_Skip_Single
 	}
 
 	solved: dds.Solved_Boards
-	if rc := dds.SolveAllBoardsBin(&bo, &solved); rc != .NO_FAULT {
+	if rc := dds.SolveAllBoardsBin(&boards, &solved); rc != .NO_FAULT {
 		fmt.eprintln("SolveAllBoardsBin failed:", dds.error_message(rc))
 		return
 	}
 
 	for handno in 0 ..< len(hands.DEALS) {
 		hands.print_hand(fmt.tprintf("SolveAllBoardsBin, hand %d", handno + 1), hands.DEALS[handno])
-		hands.print_fut("solutions = All", &solved.solvedBoard[handno])
+		hands.print_future_tricks("solutions = All (every card + score)", &solved.solvedBoard[handno])
 		fmt.println()
 	}
 }
@@ -53,18 +53,18 @@ test_solve_all_boards_bin :: proc(t: ^testing.T) {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	bo: dds.Boards
-	bo.noOfBoards = i32(len(hands.DEALS))
+	boards: dds.Boards
+	boards.noOfBoards = i32(len(hands.DEALS))
 	for handno in 0 ..< len(hands.DEALS) {
-		bo.deals[handno].trump = hands.TRUMP[handno]
-		bo.deals[handno].first = hands.FIRST[handno]
-		bo.deals[handno].remainCards = hands.DEALS[handno]
-		bo.target[handno] = dds.TARGET_FIND_MAX
-		bo.solutions[handno] = .All
-		bo.mode[handno] = .Auto_Skip_Single
+		boards.deals[handno].trump = hands.TRUMP[handno]
+		boards.deals[handno].first = hands.FIRST[handno]
+		boards.deals[handno].remainCards = hands.DEALS[handno]
+		boards.target[handno] = dds.TARGET_FIND_MAX
+		boards.solutions[handno] = .All
+		boards.mode[handno] = .Auto_Skip_Single
 	}
 
 	solved: dds.Solved_Boards
-	testing.expect_value(t, dds.SolveAllBoardsBin(&bo, &solved), dds.Return_Code.NO_FAULT)
+	testing.expect_value(t, dds.SolveAllBoardsBin(&boards, &solved), dds.Return_Code.NO_FAULT)
 	testing.expect_value(t, solved.solvedBoard[0].score[0], 5)
 }

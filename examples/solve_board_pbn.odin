@@ -23,26 +23,28 @@ main :: proc() {
 	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.PBN) {
-		dl: dds.Deal_Pbn
-		dl.trump = hands.TRUMP[handno]
-		dl.first = hands.FIRST[handno]
-		hands.set_chars(dl.remainCards[:], hands.PBN[handno])
+		deal_pbn: dds.Deal_Pbn
+		deal_pbn.trump = hands.TRUMP[handno]
+		deal_pbn.first = hands.FIRST[handno]
+		hands.set_chars(deal_pbn.remainCards[:], hands.PBN[handno])
 
-		fut3: dds.Future_Tricks
-		if rc := dds.SolveBoardPBN(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut3); rc != .NO_FAULT {
+		future_all: dds.Future_Tricks
+		if rc := dds.SolveBoardPBN(deal_pbn, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &future_all);
+		   rc != .NO_FAULT {
 			fmt.eprintln("SolveBoardPBN failed:", dds.error_message(rc))
 			continue
 		}
 
-		fut2: dds.Future_Tricks
-		if rc := dds.SolveBoardPBN(dl, dds.TARGET_FIND_MAX, .All_Optimal, .Auto_Skip_Single, &fut2); rc != .NO_FAULT {
+		future_optimal: dds.Future_Tricks
+		if rc := dds.SolveBoardPBN(deal_pbn, dds.TARGET_FIND_MAX, .All_Optimal, .Auto_Skip_Single, &future_optimal);
+		   rc != .NO_FAULT {
 			fmt.eprintln("SolveBoardPBN failed:", dds.error_message(rc))
 			continue
 		}
 
 		hands.print_pbn_hand(fmt.tprintf("SolveBoardPBN, hand %d", handno + 1), hands.PBN[handno])
-		hands.print_fut("solutions == 3", &fut3)
-		hands.print_fut("solutions == 2", &fut2)
+		hands.print_future_tricks("solutions = All (every card + score)", &future_all)
+		hands.print_future_tricks("solutions = All_Optimal (best cards only)", &future_optimal)
 		fmt.println()
 	}
 }
@@ -53,17 +55,17 @@ test_solve_board_pbn :: proc(t: ^testing.T) {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	dl: dds.Deal_Pbn
-	dl.trump = hands.TRUMP[0]
-	dl.first = hands.FIRST[0]
-	hands.set_chars(dl.remainCards[:], hands.PBN[0])
+	deal_pbn: dds.Deal_Pbn
+	deal_pbn.trump = hands.TRUMP[0]
+	deal_pbn.first = hands.FIRST[0]
+	hands.set_chars(deal_pbn.remainCards[:], hands.PBN[0])
 
-	fut: dds.Future_Tricks
+	future_tricks: dds.Future_Tricks
 	testing.expect_value(
 		t,
-		dds.SolveBoardPBN(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut),
+		dds.SolveBoardPBN(deal_pbn, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &future_tricks),
 		dds.Return_Code.NO_FAULT,
 	)
-	testing.expect(t, fut.cards > 0)
-	testing.expect_value(t, fut.score[0], 5)
+	testing.expect(t, future_tricks.cards > 0)
+	testing.expect_value(t, future_tricks.score[0], 5)
 }

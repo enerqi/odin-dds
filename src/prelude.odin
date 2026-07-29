@@ -10,6 +10,9 @@ when ODIN_OS == .Windows {
 	// call, or the first call dereferences unsized state and crashes. See examples/smoke.odin.
 	foreign import lib "lib/dds.lib"
 } else when ODIN_OS == .Linux || ODIN_OS == .FreeBSD || ODIN_OS == .OpenBSD || ODIN_OS == .NetBSD {
+	// Same one-time-init requirement as the Windows branch above: src/Makefile does not define
+	// USES_CONSTRUCTOR, so DDS's `__attribute__((constructor))` auto-init is not compiled in and
+	// you MUST call `SetMaxThreads(0)` (or SetResources) once before any other DDS call.
 	when !#exists("lib/dds.a") {
 		#panic("Cannot find compiled dds libraries ./lib/dds.a. Compile by running `just build-lib`")
 	}

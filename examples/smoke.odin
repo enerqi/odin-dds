@@ -13,9 +13,10 @@ import dds ".."
 // `just run` builds and runs this. See the other examples for each specific DDS entry point.
 main :: proc() {
 	// DDS requires one-time init before any other call: it sizes thread-local transposition-table
-	// memory and computes constant tables. The DLL does this automatically from DllMain, but a
-	// STATIC lib on Windows has no auto-init (DllMain never fires when statically linked), so we
-	// must call it ourselves. 0 = let DDS pick the thread count from the core count.
+	// memory and computes constant tables. The DLL does this automatically from DllMain, but the
+	// STATIC lib these bindings link has no auto-init on any platform (DllMain never fires when
+	// statically linked, and the Unix constructor path is not compiled in), so we must call it
+	// ourselves. 0 = let DDS pick the thread count from the core count.
 	dds.SetMaxThreads(0)
 	defer dds.FreeMemory()
 
@@ -34,41 +35,41 @@ main :: proc() {
 	// A valid 52-card deal: each hand holds one complete suit. `Holding` is a bit_set over ranks, and
 	// `Table_Deal.cards` is an enumerated array indexed [Hand][Suit].
 	full_suit := dds.Holding{._2, ._3, ._4, ._5, ._6, ._7, ._8, ._9, .Ten, .Jack, .Queen, .King, .Ace}
-	deal: dds.Table_Deal
-	deal.cards[.North][.Spades] = full_suit
-	deal.cards[.East][.Hearts] = full_suit
-	deal.cards[.South][.Diamonds] = full_suit
-	deal.cards[.West][.Clubs] = full_suit
+	table_deal: dds.Table_Deal
+	table_deal.cards[.North][.Spades] = full_suit
+	table_deal.cards[.East][.Hearts] = full_suit
+	table_deal.cards[.South][.Diamonds] = full_suit
+	table_deal.cards[.West][.Clubs] = full_suit
 
-	res: dds.Table_Results
-	if rc := dds.CalcDDtable(deal, &res); rc != .NO_FAULT {
+	table_results: dds.Table_Results
+	if rc := dds.CalcDDtable(table_deal, &table_results); rc != .NO_FAULT {
 		fmt.eprintln("CalcDDtable failed:", dds.error_message(rc))
 		os.exit(1)
 	}
 
 	// resTable is [Strain][Hand]i32 -- read a few entries through the enums.
-	fmt.printfln("Tricks in NT by North:      %d", res.resTable[.NT][.North])
-	fmt.printfln("Tricks in Spades by North:  %d", res.resTable[.Spades][.North])
-	fmt.printfln("Tricks in Hearts by East:   %d", res.resTable[.Hearts][.East])
+	fmt.printfln("Tricks in NT by North:      %d", table_results.resTable[.NT][.North])
+	fmt.printfln("Tricks in Spades by North:  %d", table_results.resTable[.Spades][.North])
+	fmt.printfln("Tricks in Hearts by East:   %d", table_results.resTable[.Hearts][.East])
 }
 
 // `odin test` picks up @(test) procs and ignores `main`, so the example doubles as a test. Same deal as
-// `main`, minus the info/printing: assert the known trick counts instead. `just test_examples` runs it.
+// `main`, minus the info/printing: assert the known trick counts instead. `just test1 smoke` runs it.
 @(test)
 test_smoke :: proc(t: ^testing.T) {
 	dds.SetMaxThreads(0)
 	defer dds.FreeMemory()
 
 	full_suit := dds.Holding{._2, ._3, ._4, ._5, ._6, ._7, ._8, ._9, .Ten, .Jack, .Queen, .King, .Ace}
-	deal: dds.Table_Deal
-	deal.cards[.North][.Spades] = full_suit
-	deal.cards[.East][.Hearts] = full_suit
-	deal.cards[.South][.Diamonds] = full_suit
-	deal.cards[.West][.Clubs] = full_suit
+	table_deal: dds.Table_Deal
+	table_deal.cards[.North][.Spades] = full_suit
+	table_deal.cards[.East][.Hearts] = full_suit
+	table_deal.cards[.South][.Diamonds] = full_suit
+	table_deal.cards[.West][.Clubs] = full_suit
 
-	res: dds.Table_Results
-	testing.expect_value(t, dds.CalcDDtable(deal, &res), dds.Return_Code.NO_FAULT)
-	testing.expect_value(t, res.resTable[.NT][.North], 0)
-	testing.expect_value(t, res.resTable[.Spades][.North], 13)
-	testing.expect_value(t, res.resTable[.Hearts][.East], 13)
+	table_results: dds.Table_Results
+	testing.expect_value(t, dds.CalcDDtable(table_deal, &table_results), dds.Return_Code.NO_FAULT)
+	testing.expect_value(t, table_results.resTable[.NT][.North], 0)
+	testing.expect_value(t, table_results.resTable[.Spades][.North], 13)
+	testing.expect_value(t, table_results.resTable[.Hearts][.East], 13)
 }

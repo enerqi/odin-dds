@@ -25,45 +25,45 @@ main :: proc() {
 	defer dds.FreeMemory()
 
 	// Binary batch via SolveAllChunksBin.
-	bo: dds.Boards
-	bo.noOfBoards = i32(len(hands.DEALS))
+	boards: dds.Boards
+	boards.noOfBoards = i32(len(hands.DEALS))
 	for handno in 0 ..< len(hands.DEALS) {
-		bo.deals[handno].trump = hands.TRUMP[handno]
-		bo.deals[handno].first = hands.FIRST[handno]
-		bo.deals[handno].remainCards = hands.DEALS[handno]
-		bo.target[handno] = dds.TARGET_FIND_MAX
-		bo.solutions[handno] = .All
-		bo.mode[handno] = .Auto_Skip_Single
+		boards.deals[handno].trump = hands.TRUMP[handno]
+		boards.deals[handno].first = hands.FIRST[handno]
+		boards.deals[handno].remainCards = hands.DEALS[handno]
+		boards.target[handno] = dds.TARGET_FIND_MAX
+		boards.solutions[handno] = .All
+		boards.mode[handno] = .Auto_Skip_Single
 	}
 
 	solved: dds.Solved_Boards
-	if rc := dds.SolveAllChunksBin(&bo, &solved, 1); rc != .NO_FAULT { 	// chunkSize = 1
+	if rc := dds.SolveAllChunksBin(&boards, &solved, 1); rc != .NO_FAULT { 	// chunkSize = 1
 		fmt.eprintln("SolveAllChunksBin failed:", dds.error_message(rc))
 		return
 	}
 	for handno in 0 ..< len(hands.DEALS) {
 		hands.print_hand(fmt.tprintf("SolveAllChunksBin, hand %d", handno + 1), hands.DEALS[handno])
-		hands.print_fut("solutions = All", &solved.solvedBoard[handno])
+		hands.print_future_tricks("solutions = All (every card + score)", &solved.solvedBoard[handno])
 		fmt.println()
 	}
 
 	// The PBN-input equivalents (SolveAllChunksPBN, and the legacy alias SolveAllChunks) take Boards_Pbn.
-	bop: dds.Boards_Pbn
-	bop.noOfBoards = i32(len(hands.PBN))
+	boards_pbn: dds.Boards_Pbn
+	boards_pbn.noOfBoards = i32(len(hands.PBN))
 	for handno in 0 ..< len(hands.PBN) {
-		bop.deals[handno].trump = hands.TRUMP[handno]
-		bop.deals[handno].first = hands.FIRST[handno]
-		hands.set_chars(bop.deals[handno].remainCards[:], hands.PBN[handno])
-		bop.target[handno] = dds.TARGET_FIND_MAX
-		bop.solutions[handno] = .All
-		bop.mode[handno] = .Auto_Skip_Single
+		boards_pbn.deals[handno].trump = hands.TRUMP[handno]
+		boards_pbn.deals[handno].first = hands.FIRST[handno]
+		hands.set_chars(boards_pbn.deals[handno].remainCards[:], hands.PBN[handno])
+		boards_pbn.target[handno] = dds.TARGET_FIND_MAX
+		boards_pbn.solutions[handno] = .All
+		boards_pbn.mode[handno] = .Auto_Skip_Single
 	}
 	solved_pbn: dds.Solved_Boards
-	if rc := dds.SolveAllChunksPBN(&bop, &solved_pbn); rc != .NO_FAULT {
+	if rc := dds.SolveAllChunksPBN(&boards_pbn, &solved_pbn); rc != .NO_FAULT {
 		fmt.eprintln("SolveAllChunksPBN failed:", dds.error_message(rc))
 		return
 	}
-	if rc := dds.SolveAllChunks(&bop, &solved_pbn); rc != .NO_FAULT { 	// legacy alias, same signature
+	if rc := dds.SolveAllChunks(&boards_pbn, &solved_pbn); rc != .NO_FAULT { 	// legacy alias, same signature
 		fmt.eprintln("SolveAllChunks failed:", dds.error_message(rc))
 		return
 	}
@@ -76,18 +76,18 @@ test_solve_all_chunks :: proc(t: ^testing.T) {
 	dds.SetMaxThreads()
 	defer dds.FreeMemory()
 
-	bo: dds.Boards
-	bo.noOfBoards = i32(len(hands.DEALS))
+	boards: dds.Boards
+	boards.noOfBoards = i32(len(hands.DEALS))
 	for handno in 0 ..< len(hands.DEALS) {
-		bo.deals[handno].trump = hands.TRUMP[handno]
-		bo.deals[handno].first = hands.FIRST[handno]
-		bo.deals[handno].remainCards = hands.DEALS[handno]
-		bo.target[handno] = dds.TARGET_FIND_MAX
-		bo.solutions[handno] = .All
-		bo.mode[handno] = .Auto_Skip_Single
+		boards.deals[handno].trump = hands.TRUMP[handno]
+		boards.deals[handno].first = hands.FIRST[handno]
+		boards.deals[handno].remainCards = hands.DEALS[handno]
+		boards.target[handno] = dds.TARGET_FIND_MAX
+		boards.solutions[handno] = .All
+		boards.mode[handno] = .Auto_Skip_Single
 	}
 
 	solved: dds.Solved_Boards
-	testing.expect_value(t, dds.SolveAllChunksBin(&bo, &solved, 1), dds.Return_Code.NO_FAULT)
+	testing.expect_value(t, dds.SolveAllChunksBin(&boards, &solved, 1), dds.Return_Code.NO_FAULT)
 	testing.expect_value(t, solved.solvedBoard[0].score[0], 5)
 }

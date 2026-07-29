@@ -51,14 +51,14 @@ main :: proc() {
 	)
 
 	// Do some real work so the thread memory actually gets allocated.
-	td: dds.Table_Deal
-	td.cards = hands.DEALS[0]
-	res: dds.Table_Results
-	if rc := dds.CalcDDtable(td, &res); rc != .NO_FAULT {
+	table_deal: dds.Table_Deal
+	table_deal.cards = hands.DEALS[0]
+	table_results: dds.Table_Results
+	if rc := dds.CalcDDtable(table_deal, &table_results); rc != .NO_FAULT {
 		fmt.eprintln("CalcDDtable failed:", dds.error_message(rc))
 		return
 	}
-	fmt.printfln("Solved a table (NT by North = %d tricks).", res.resTable[.NT][.North])
+	fmt.printfln("Solved a table (NT by North = %d tricks).", table_results.resTable[.NT][.North])
 	// `defer dds.FreeMemory()` above releases the per-thread pool as this proc returns.
 }
 
@@ -71,9 +71,9 @@ test_threading :: proc(t: ^testing.T) {
 	defer dds.FreeMemory()
 	dds.SetThreading(.WinAPI) // best-effort; keep whatever backend is available
 
-	td: dds.Table_Deal
-	td.cards = hands.DEALS[0]
-	res: dds.Table_Results
-	testing.expect_value(t, dds.CalcDDtable(td, &res), dds.Return_Code.NO_FAULT)
-	hands.expect_table(t, &res, hands.DDTABLE_0)
+	table_deal: dds.Table_Deal
+	table_deal.cards = hands.DEALS[0]
+	table_results: dds.Table_Results
+	testing.expect_value(t, dds.CalcDDtable(table_deal, &table_results), dds.Return_Code.NO_FAULT)
+	hands.expect_table(t, &table_results, hands.DDTABLE_0)
 }

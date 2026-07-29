@@ -68,7 +68,7 @@ use enumerated arrays so the indices *are* the enums:
 
 ```odin
 deal.cards[.North][.Spades] = spades          // [Hand][Suit]Holding
-tricks := res.resTable[.NT][.North]           // [Strain][Hand]i32
+tricks := table_results.resTable[.NT][.North]  // [Strain][Hand]i32
 ```
 
 > **Gotcha — `denom` ordering.** `Contract_Type.denom` uses a *different* order than `Suit`/`Strain`
@@ -126,9 +126,9 @@ SolveBoard :: proc(dl: Deal, target: i32, solutions: Solutions, mode: Solve_Mode
                    futp: ^Future_Tricks, threadIndex: i32 = 0) -> Return_Code
 ```
 ```odin
-fut: dds.Future_Tricks
-dds.SolveBoard(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut)
-// fut.cards entries; fut.score[0] is the max tricks, fut.suit[i]/rank[i]/equals[i] the cards.
+future_tricks: dds.Future_Tricks
+dds.SolveBoard(deal, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &future_tricks)
+// future_tricks.cards entries; .score[0] is the max tricks, .suit[i]/.rank[i]/.equals[i] the cards.
 ```
 → [`solve_board.odin`](../examples/solve_board.odin), [`solve_board_pbn.odin`](../examples/solve_board_pbn.odin)
 
@@ -139,9 +139,9 @@ dds.SolveBoard(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut)
 CalcDDtable :: proc(tableDeal: Table_Deal, tablep: ^Table_Results) -> Return_Code
 ```
 ```odin
-res: dds.Table_Results
-dds.CalcDDtable(td, &res)
-n := res.resTable[.NT][.North]
+table_results: dds.Table_Results
+dds.CalcDDtable(table_deal, &table_results)
+n := table_results.resTable[.NT][.North]
 ```
 → [`calc_ddtable.odin`](../examples/calc_ddtable.odin), [`calc_ddtable_pbn.odin`](../examples/calc_ddtable_pbn.odin)
 
@@ -172,19 +172,20 @@ cost a trick.
 Prefer these to a hand loop when you have many deals.
 
 ```odin
-bo: dds.Boards_Pbn
-bo.noOfBoards = i32(n)                  // <= 200
-// ... fill bo.deals[i], bo.target[i], bo.solutions[i], bo.mode[i] ...
+boards: dds.Boards_Pbn
+boards.noOfBoards = i32(n)              // <= 200
+// ... fill boards.deals[i], boards.target[i], boards.solutions[i], boards.mode[i] ...
 solved: dds.Solved_Boards
-dds.SolveAllBoards(&bo, &solved)        // DDS fans out internally
+dds.SolveAllBoards(&boards, &solved)    // DDS fans out internally
 ```
 
 `SolveAllBoards` takes PBN input (`Boards_Pbn`); **`SolveAllBoardsBin`** is its binary-input twin (takes
 `Boards`, whose deals hold `Holding` bit_sets) — added in DDS 2.9.1 "for symmetry" with the PBN form. Note
 `SolveAllBoards` fixes `chunkSize` internally, whereas the `SolveAllChunks*` variants expose it.
 
-→ [`solve_all_boards.odin`](../examples/solve_all_boards.odin), [`solve_all_chunks.odin`](../examples/solve_all_chunks.odin),
-[`calc_all_tables.odin`](../examples/calc_all_tables.odin), [`analyse_all_plays_bin.odin`](../examples/analyse_all_plays_bin.odin)
+→ [`solve_all_boards.odin`](../examples/solve_all_boards.odin), [`solve_all_boards_bin.odin`](../examples/solve_all_boards_bin.odin),
+[`solve_all_chunks.odin`](../examples/solve_all_chunks.odin), [`calc_all_tables.odin`](../examples/calc_all_tables.odin),
+[`analyse_all_plays_bin.odin`](../examples/analyse_all_plays_bin.odin)
 
 ---
 
@@ -195,7 +196,7 @@ The most common confusion: **you rarely thread anything yourself — DDS does th
 
 ### 1. DDS's internal worker pool — the default
 
-The **batched** functions — `SolveAllBoards`/`SolveAllBoardsBin`, `SolveAllChunksBin/PBN`,
+The **batched** functions — `SolveAllBoards`/`SolveAllBoardsBin`, `SolveAllChunks`/`Bin`/`PBN`,
 `CalcAllTables/PBN`, `AnalyseAllPlays*` — split their boards across a pool of worker threads **inside DDS**. `CalcDDtable`
 similarly parallelizes per strain. You hand DDS a batch; it fans out; you get results back. **No threads in
 your code.** From `dll-description.md`:
@@ -244,8 +245,8 @@ across concurrent calls corrupts that slot.
 // Pseudocode: N worker threads, each owning one DDS memory slot.
 dds.SetMaxThreads(i32(N))
 // thread i:
-fut: dds.Future_Tricks
-dds.SolveBoard(dl, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &fut, i32(i)) // threadIndex = i
+future_tricks: dds.Future_Tricks
+dds.SolveBoard(deal, dds.TARGET_FIND_MAX, .All, .Auto_Skip_Single, &future_tricks, i32(i)) // threadIndex = i
 ```
 
 For most workloads the batched functions (model 1) are simpler *and* faster — reach for model 2 only when
@@ -296,7 +297,7 @@ Turn a code into text with `dds.error_message(code)` — a convenience wrapper t
 (the raw C `dds.ErrorMessage(code, &buf)` fills an `[80]i8` buffer instead):
 
 ```odin
-if rc := dds.CalcDDtable(td, &res); rc != .NO_FAULT {
+if rc := dds.CalcDDtable(table_deal, &table_results); rc != .NO_FAULT {
     fmt.eprintln("CalcDDtable failed:", dds.error_message(rc))
 }
 ```

@@ -3,7 +3,7 @@
 //
 // NOTE: DDS's C `holdings[handno][suit][hand]` is transposed relative to `deal.remainCards[hand][suit]`;
 // the C examples transpose on assignment. We store DEALS already in [Hand][Suit] order, so an example can
-// assign a whole board directly:  dl.remainCards = hands.DEALS[i]
+// assign a whole board directly:  deal.remainCards = hands.DEALS[i]
 package hands
 
 import "core:fmt"
@@ -142,10 +142,10 @@ STRAIN_STR := [dds.Strain]string {
 
 // Render one suit holding high-to-low, e.g. Holding{.King,.Six,.Five,.Two} -> "K652" (or "-" if void).
 // Cloned into `allocator` (defaults to the temp allocator).
-holding_string :: proc(h: dds.Holding, allocator := context.temp_allocator) -> string {
+holding_string :: proc(holding: dds.Holding, allocator := context.temp_allocator) -> string {
 	b := strings.builder_make(allocator)
 	for r in RANKS_HIGH_TO_LOW {
-		if r in h {
+		if r in holding {
 			strings.write_byte(&b, RANK_CHAR[r])
 		}
 	}
@@ -168,12 +168,12 @@ print_hand :: proc(title: string, cards: [dds.Hand][dds.Suit]dds.Holding) {
 }
 
 // Print a double-dummy table: tricks for each strain (rows) and declarer (columns).
-print_table :: proc(res: ^dds.Table_Results) {
+print_table :: proc(table_results: ^dds.Table_Results) {
 	fmt.println("       N  E  S  W")
 	for strain in dds.Strain {
 		fmt.printf("  %s ", STRAIN_STR[strain])
 		for hand in dds.Hand {
-			fmt.printf(" %2d", res.resTable[strain][hand])
+			fmt.printf(" %2d", table_results.resTable[strain][hand])
 		}
 		fmt.println()
 	}
@@ -225,23 +225,23 @@ rank_from_char :: proc(c: u8) -> i32 {
 
 // Parse a PLAY_PBN card string into a binary play trace (Suit encoding + rank 2..14).
 play_trace_bin :: proc(pbn: string) -> dds.Play_Trace_Bin {
-	p: dds.Play_Trace_Bin
+	trace: dds.Play_Trace_Bin
 	n: i32 = 0
 	for i := 0; i + 1 < len(pbn); i += 2 {
-		p.suit[n] = suit_from_char(pbn[i])
-		p.rank[n] = rank_from_char(pbn[i + 1])
+		trace.suit[n] = suit_from_char(pbn[i])
+		trace.rank[n] = rank_from_char(pbn[i + 1])
 		n += 1
 	}
-	p.number = n
-	return p
+	trace.number = n
+	return trace
 }
 
 // A PBN play trace just carries the raw card string plus a count.
 play_trace_pbn :: proc(pbn: string) -> dds.Play_Trace_Pbn {
-	p: dds.Play_Trace_Pbn
-	p.number = i32(len(pbn) / 2)
-	set_chars(p.cards[:], pbn)
-	return p
+	trace: dds.Play_Trace_Pbn
+	trace.number = i32(len(pbn) / 2)
+	set_chars(trace.cards[:], pbn)
+	return trace
 }
 
 // Copy an Odin string into a fixed C char (i8) buffer, null-terminated (the DDS *PBN structs use these).
@@ -265,13 +265,13 @@ print_pbn_hand :: proc(title: string, pbn: string) {
 }
 
 // Print a par result: the par score and contracts for each side.
-print_par :: proc(pres: ^dds.Par_Results) {
+print_par :: proc(par_results: ^dds.Par_Results) {
 	for side in dds.Side {
 		fmt.printfln(
 			"  %v: score %s  contracts %s",
 			side,
-			chars_string(pres.parScore[side][:]),
-			chars_string(pres.parContractsString[side][:]),
+			chars_string(par_results.parScore[side][:]),
+			chars_string(par_results.parContractsString[side][:]),
 		)
 	}
 }
@@ -287,52 +287,52 @@ CONTRACT_DENOM_STR := [dds.Contract_Denom]string {
 
 // Format one structured par contract, e.g. "4S by N", "3NT by NS -2" (a 2-trick sacrifice), "4H by E +1".
 // NOTE: Contract_Denom has its own ordering (NT = 0), distinct from Suit/Strain -- see the bindings.
-contract_string :: proc(c: dds.Contract_Type) -> string {
-	base := fmt.tprintf("%d%s by %v", c.level, CONTRACT_DENOM_STR[c.denom], c.seats)
-	if c.underTricks > 0 {
-		return fmt.tprintf("%s -%d", base, c.underTricks)
+contract_string :: proc(contract: dds.Contract_Type) -> string {
+	base := fmt.tprintf("%d%s by %v", contract.level, CONTRACT_DENOM_STR[contract.denom], contract.seats)
+	if contract.underTricks > 0 {
+		return fmt.tprintf("%s -%d", base, contract.underTricks)
 	}
-	if c.overTricks > 0 {
-		return fmt.tprintf("%s +%d", base, c.overTricks)
+	if contract.overTricks > 0 {
+		return fmt.tprintf("%s +%d", base, contract.overTricks)
 	}
 	return base
 }
 
 // Print a structured (binary) par result: the par score and its contracts as Contract_Type structs.
-print_par_master :: proc(pres: ^dds.Par_Results_Master) {
-	fmt.printfln("  Par score (NS view) %d, %d contract(s):", pres.score, pres.number)
-	for i in 0 ..< pres.number {
-		fmt.printfln("    %s", contract_string(pres.contracts[i]))
+print_par_master :: proc(par_results_master: ^dds.Par_Results_Master) {
+	fmt.printfln("  Par score (NS view) %d, %d contract(s):", par_results_master.score, par_results_master.number)
+	for i in 0 ..< par_results_master.number {
+		fmt.printfln("    %s", contract_string(par_results_master.contracts[i]))
 	}
 }
 
 // Print a two-sided par text result (from ConvertToSidesTextFormat).
-print_par_text :: proc(t: ^dds.Par_Text_Results) {
-	fmt.printfln("  NS view: %s", chars_string(t.parText[.NS][:]))
-	fmt.printfln("  EW view: %s", chars_string(t.parText[.EW][:]))
-	fmt.printfln("  side-independent: %v", t.equal)
+print_par_text :: proc(par_text_results: ^dds.Par_Text_Results) {
+	fmt.printfln("  NS view: %s", chars_string(par_text_results.parText[.NS][:]))
+	fmt.printfln("  EW view: %s", chars_string(par_text_results.parText[.EW][:]))
+	fmt.printfln("  side-independent: %v", par_text_results.equal)
 }
 
 // Print a dealer-oriented par result: score and the list of par contracts.
-print_dealer_par :: proc(pres: ^dds.Par_Results_Dealer) {
-	fmt.printfln("  Score %d, %d contract(s):", pres.score, pres.number)
-	for i in 0 ..< pres.number {
-		fmt.printfln("    %s", chars_string(pres.contracts[i][:]))
+print_dealer_par :: proc(par_results_dealer: ^dds.Par_Results_Dealer) {
+	fmt.printfln("  Score %d, %d contract(s):", par_results_dealer.score, par_results_dealer.number)
+	for i in 0 ..< par_results_dealer.number {
+		fmt.printfln("    %s", chars_string(par_results_dealer.contracts[i][:]))
 	}
 }
 
 // Print a futureTricks result: each returned card (suit+rank), its score (tricks), and the lower
 // equivalent cards (`equals`, a Holding).
-print_fut :: proc(title: string, fut: ^dds.Future_Tricks) {
+print_future_tricks :: proc(title: string, future_tricks: ^dds.Future_Tricks) {
 	fmt.println(title)
-	for i in 0 ..< fut.cards {
-		rank := dds.Rank(u8(fut.rank[i]))
+	for i in 0 ..< future_tricks.cards {
+		rank := dds.Rank(u8(future_tricks.rank[i]))
 		fmt.printfln(
 			"  %c%c  score %d  equals %s",
-			SUIT_CHAR[fut.suit[i]],
+			SUIT_CHAR[future_tricks.suit[i]],
 			RANK_CHAR[rank],
-			fut.score[i],
-			holding_string(fut.equals[i]),
+			future_tricks.score[i],
+			holding_string(future_tricks.equals[i]),
 		)
 	}
 }

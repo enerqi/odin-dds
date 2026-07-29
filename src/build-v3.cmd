@@ -2,7 +2,7 @@
 setlocal
 rem ===========================================================================
 rem  build-v3.cmd - minimal Bazel wrapper for DDS 3.0.0 static lib, with the
-rem  cl flags overridden to match the 2.9.0 build.cmd intent.
+rem  cl flags overridden to match the 2.9.1 build.cmd intent.
 rem
 rem  Usage:  build-v3.cmd [dds-dir]            (default: ".", the current dir)
 rem  Relocatable like build.cmd: the script does NOT use its own location. It
@@ -18,7 +18,7 @@ rem  /permissive-, /EHsc. So we only override the rest of build.cmd's intent.
 rem
 rem  NOTE on threading: v3 reworked the threading layer - System's dispatch
 rem  callbacks were removed (system/system.cpp) and the DDS_THREADS_* macros now
-rem  mostly drive capability DETECTION. Passing these defines reproduces 2.9.0's
+rem  mostly drive capability DETECTION. Passing these defines reproduces 2.9.1's
 rem  configured set, but VERIFY at runtime (SetMaxThreads + solve many boards,
 rem  watch CPU) that v3 actually parallelizes before relying on it.
 rem

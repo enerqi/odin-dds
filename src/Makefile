@@ -7,6 +7,11 @@
 #
 # No LTO: Odin uses lld-link / ld, not g++ -- LTO objects are non-portable.
 # ffunction-sections: lets the linker dead-strip unused DDS symbols.
+#
+# INIT CAVEAT (same as build.cmd's static mode): DDS only auto-initializes from
+# DllMain (Windows DLL) or its USES_CONSTRUCTOR path, and we define neither, so
+# nothing sizes the per-thread TT memory for us. Consumers MUST call
+# SetMaxThreads(0) (or SetResources) once before any other DDS call.
 
 UNAME_S := $(shell uname -s)
 

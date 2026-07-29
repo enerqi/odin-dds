@@ -22,31 +22,32 @@ main :: proc() {
 
 	for handno in 0 ..< len(hands.DEALS) {
 		// Binary deal -> CalcPar gives table + par together.
-		td: dds.Table_Deal
-		td.cards = hands.DEALS[handno]
-		table: dds.Table_Results
-		pres: dds.Par_Results
-		if rc := dds.CalcPar(td, hands.VUL[handno], &table, &pres); rc != .NO_FAULT {
+		table_deal: dds.Table_Deal
+		table_deal.cards = hands.DEALS[handno]
+		table_results: dds.Table_Results
+		par_results: dds.Par_Results
+		if rc := dds.CalcPar(table_deal, hands.VUL[handno], &table_results, &par_results); rc != .NO_FAULT {
 			fmt.eprintln("CalcPar failed:", dds.error_message(rc))
 			continue
 		}
 
 		// The same deal as PBN via CalcParPBN -- should yield an identical par.
-		tdp: dds.Table_Deal_Pbn
-		hands.set_chars(tdp.cards[:], hands.PBN[handno])
-		table_pbn: dds.Table_Results
-		pres_pbn: dds.Par_Results
-		if rc := dds.CalcParPBN(tdp, &table_pbn, hands.VUL[handno], &pres_pbn); rc != .NO_FAULT {
+		table_deal_pbn: dds.Table_Deal_Pbn
+		hands.set_chars(table_deal_pbn.cards[:], hands.PBN[handno])
+		table_results_pbn: dds.Table_Results
+		par_results_pbn: dds.Par_Results
+		if rc := dds.CalcParPBN(table_deal_pbn, &table_results_pbn, hands.VUL[handno], &par_results_pbn);
+		   rc != .NO_FAULT {
 			fmt.eprintln("CalcParPBN failed:", dds.error_message(rc))
 			continue
 		}
 
 		fmt.printfln("CalcPar, hand %d (vul %v)", handno + 1, hands.VUL[handno])
-		hands.print_table(&table)
+		hands.print_table(&table_results)
 		fmt.println("  via CalcPar (binary deal):")
-		hands.print_par(&pres)
+		hands.print_par(&par_results)
 		fmt.println("  via CalcParPBN (PBN deal):")
-		hands.print_par(&pres_pbn)
+		hands.print_par(&par_results_pbn)
 		fmt.println()
 	}
 }

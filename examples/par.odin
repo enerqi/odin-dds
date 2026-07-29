@@ -25,23 +25,23 @@ main :: proc() {
 	defer dds.FreeMemory()
 
 	for handno in 0 ..< len(hands.DEALS) {
-		td: dds.Table_Deal
-		td.cards = hands.DEALS[handno]
-		table: dds.Table_Results
-		if rc := dds.CalcDDtable(td, &table); rc != .NO_FAULT {
+		table_deal: dds.Table_Deal
+		table_deal.cards = hands.DEALS[handno]
+		table_results: dds.Table_Results
+		if rc := dds.CalcDDtable(table_deal, &table_results); rc != .NO_FAULT {
 			fmt.eprintln("CalcDDtable failed:", dds.error_message(rc))
 			continue
 		}
 
-		pres: dds.Par_Results
-		if rc := dds.Par(&table, &pres, hands.VUL[handno]); rc != .NO_FAULT {
+		par_results: dds.Par_Results
+		if rc := dds.Par(&table_results, &par_results, hands.VUL[handno]); rc != .NO_FAULT {
 			fmt.eprintln("Par failed:", dds.error_message(rc))
 			continue
 		}
 
 		fmt.printfln("Par, hand %d (vul %v)", handno + 1, hands.VUL[handno])
-		hands.print_table(&table)
-		hands.print_par(&pres)
+		hands.print_table(&table_results)
+		hands.print_par(&par_results)
 		fmt.println()
 	}
 }
