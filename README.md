@@ -7,15 +7,19 @@ A *double-dummy solver* computes the exact number of tricks each side can take o
 visible and optimal play from everyone. DDS is the de-facto standard engine behind bridge hand analysis, par-score and
 par-contract calculation, and play analysis; it is fast, multi-threaded, and battle-tested.
 
-The DDS C/C++ source is included as a git submodule under [`external/dds`](./external/dds) and is *not* modified — these
-bindings wrap its public C ABI (`include/dll.h`).
+The DDS C/C++ source is vendored *unmodified* under [`external/dds`](./external/dds) — these bindings wrap its public
+C ABI (`include/dll.h`). No submodule, no extra clone step: `git clone` gets you everything, and
+`just build-lib` works offline. See [`external/dds/VENDORED.md`](./external/dds/VENDORED.md) for the exact upstream
+commit and what was left out.
 
 
 ## API structure
 
 See [`docs/api.md`](./docs/api.md) for the idiomatic-Odin API guide — types, core functions, threading, and
-memory lifecycle. The bindings are a near 1-to-1 port, so the original [DDS interface
-documentation](https://github.com/dds-bridge/dds/blob/7219c95/doc/dll-description.md) also maps directly.
+memory lifecycle. The bindings are a near 1-to-1 port, so the original DDS interface documentation also maps
+directly — it is vendored alongside the source at
+[`external/dds/doc/dll-description.md`](./external/dds/doc/dll-description.md) (also
+[upstream](https://github.com/dds-bridge/dds/blob/7219c95/doc/dll-description.md)).
 
 - Functions keep their C names: `SolveBoard`, `CalcDDtable`, `Par`, ... are called as `dds.SolveBoard`,
 	`dds.CalcDDtable`, `dds.Par`.
@@ -53,11 +57,12 @@ Skipping `SetMaxThreads` (or `SetResources`) means the first DDS call dereferenc
 
 ## Version
 
-| odin-dds tag | DDS version            | notes            |
-| ------------ | ---------------------- | ---------------- |
-| 2026-07      | 2.9.1 code (`7219c95`) | Initial bindings |
+| odin-dds tag | DDS version            | notes                                     |
+| ------------ | ---------------------- | ----------------------------------------- |
+| 2026-08      | 2.9.1 code (`7219c95`) | C++20 flag build; DDS source vendored     |
+| 2026-07      | 2.9.1 code (`7219c95`) | Initial bindings                          |
 
-> DDS never tagged 2.9.1, so the `external/dds` submodule is pinned to commit **`7219c95`** — the
+> DDS never tagged 2.9.1, so the vendored `external/dds` source is taken from commit **`7219c95`** — the
 > code-complete 2.9.1 point on the flat-layout `include/`+`src/` tree (`DDS_VERSION` upstream is still
 > `20900`; the version was never bumped). This gets the 2.9.1 fixes — rimmington's transposition-table
 > memory-freeing fixes, `#include <stdbool.h>` in C mode, and the `SolveAllBoardsBin` entry point —
@@ -84,7 +89,7 @@ Rebuild with:
 just build-lib
 ```
 
-On Windows this runs `src/build.cmd lib external/dds` (requires MSVC; auto-detected via `vswhere`) and stages `lib/dds.lib`. On Unix it runs `make -C src` and stages `lib/dds.a` or `lib/darwin/dds.a`. The submodule is checked out if needed.
+On Windows this runs `src/build.cmd lib external/dds` (requires MSVC; auto-detected via `vswhere`) and stages `lib/dds.lib`. On Unix it runs `make -C src` and stages `lib/dds.a` or `lib/darwin/dds.a`. Both compile the vendored `external/dds/src/*.cpp` — no network access needed.
 
 `src/build.cmd` also has a `dll` mode (`src/build.cmd dll external/dds`) if you prefer a DLL on Windows — the script's header comment weighs the static-vs-DLL trade-offs in depth. [`src/build-v3.cmd`](./src/build-v3.cmd) is an unused-by-default Bazel wrapper kept for experimenting with the DDS 3.0.0 tree; it is not wired into `just build-lib`.
 
@@ -122,7 +127,6 @@ Tasks are run with [just](https://just.systems/) (`just TASK`); the Windows shel
 - `just test` — run all tests (they live as `@(test)` procs inside `examples/*.odin`); `just test1 <name>` runs one example's tests
 - `just build-lib` — (re)build and stage the DDS static lib
 - `just bindgen` — regenerate the bindings
-- `just submodules` — check out / update the `external/dds` submodule
 
 
 ## License

@@ -1,3 +1,0 @@
-[submodule "external/dds"]
-	path = external/dds
-	url = https://github.com/dds-bridge/dds.git

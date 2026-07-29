@@ -163,32 +163,26 @@ diagnose name="smoke" *args: mktarget_dirs
 # SetMaxThreads(0) once before use (see src/prelude.odin and examples/smoke.odin).
 # Windows: src/build.cmd (MSVC cl+lib), stages lib/dds.lib.
 # Unix:    src/Makefile  (g++/clang++ ar), stages lib/dds.a (Linux) or lib/darwin/dds.a (macOS).
+# The DDS source is vendored in external/dds (see external/dds/VENDORED.md), so this needs no network.
 # ---
 # build the self-contained DDS static lib and stage it into ./lib
 [unix]
-build-lib: submodules
+build-lib:
 	make -C src
 
 # build the self-contained DDS static lib and stage it into ./lib
 [windows]
-build-lib: submodules
+build-lib:
 	cmd /c 'src\build.cmd lib external\dds'
 	New-Item -ItemType Directory -Force lib | Out-Null
 	cp external/dds/build/dds.lib lib/dds.lib
-
-
-# Idempotent: a no-op (no network) once the submodule is present at the recorded commit.
-# ---
-# check out / update the external/dds git submodule
-submodules:
-	git submodule update --init --recursive
 
 
 # bindgen names its output after the header stem (dll.h -> dll.odin), so it is renamed to
 # dds.odin to match the package. Requires ../odin-c-bindgen.
 # ---
 # regenerate the Odin bindings from external/dds/include/dll.h
-bindgen: submodules
+bindgen:
 	../odin-c-bindgen/bindgen.exe .
 	mv -Force dll.odin dds.odin
 
