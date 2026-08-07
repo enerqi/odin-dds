@@ -3,6 +3,22 @@ set shell := ["bash", "-c"]
 
 test_main_name := "test-main.exe"
 
+# Which linker Odin hands the object files to. `-linker:` takes exactly four values: `default` (Odin
+# picks - MSVC `link.exe` on Windows), `lld` (Windows and Linux; NOT on a stock macOS, where Odin
+# links through Apple's clang and clang ships no lld), `radlink` (Windows only, and bundled with the
+# Odin toolchain so it needs no install - which is why it is the Windows default here) and `mold`
+# (Linux only, and not bundled - `apt install mold` first). Odin has no build cache and relinks on
+# every `just run`, so the link step is a cost paid on each iteration.
+#
+# Override for a single command without editing this file. It is an env var rather than a recipe
+# argument because `odin` errors on a repeated flag, so a `-linker:` passed through a recipe's *args
+# would collide with the one the recipe already adds:
+#
+#     ODIN_LINKER=lld just run -lto:thin   # -lto on Windows *requires* -linker:lld
+#
+# See the odin-lang-skeleton justfile for the full per-value notes.
+linker := env_var_or_default("ODIN_LINKER", if os() == "windows" { "radlink" } else { "default" })
+
 # Note avoids `odinfmt -w .` as prelude.odin is an incomplete template, no properly parseable
 # ---
 # odinfmt the generated bindings + every example source (src/prelude.odin has no package line, so skip)
@@ -30,25 +46,22 @@ format:
 # type check + vet + strict style
 [unix]
 lint *args:
-	odin check . -vet -vet-cast -strict-style -no-entry-point {{args}}
-	odin check examples/hands -vet -vet-cast -strict-style -no-entry-point {{args}}
-	for f in examples/*.odin; do odin check "$f" -file -vet -vet-cast -strict-style {{args}} || exit 1; done
+	odin check . -vet -vet-cast -strict-style -vet-tabs -no-entry-point {{args}}
+	odin check examples/hands -vet -vet-cast -strict-style -vet-tabs -no-entry-point {{args}}
+	for f in examples/*.odin; do odin check "$f" -file -vet -vet-cast -strict-style -vet-tabs {{args}} || exit 1; done
 
 # type check + vet + strict style
 [windows]
 lint *args:
-	odin check . -vet -vet-cast -strict-style -no-entry-point {{args}}
-	odin check examples/hands -vet -vet-cast -strict-style -no-entry-point {{args}}
-	Get-ChildItem examples/*.odin | ForEach-Object { odin check $_.FullName -file -vet -vet-cast -strict-style {{args}}; if ($LASTEXITCODE -ne 0) { exit 1 } }
+	odin check . -vet -vet-cast -strict-style -vet-tabs -no-entry-point {{args}}
+	odin check examples/hands -vet -vet-cast -strict-style -vet-tabs -no-entry-point {{args}}
+	Get-ChildItem examples/*.odin | ForEach-Object { odin check $_.FullName -file -vet -vet-cast -strict-style -vet-tabs {{args}}; if ($LASTEXITCODE -ne 0) { exit 1 } }
 
 
 # ensure the build artifacts top level directory exists
 [unix]
 @mktarget_dirs:
-	-mkdir -p target
-	-mkdir -p target/debug
-	-mkdir -p target/fastdebug
-	-mkdir -p target/release
+	mkdir -p target/debug target/fastdebug target/release
 
 # ensure the build artifacts top level directory exists
 [windows]
@@ -64,31 +77,31 @@ qa: format lint
 # run an example (default smoke); e.g. `just run solve_board`
 [unix]
 run_debug name="smoke" *args: mktarget_dirs
-	odin run examples/{{name}}.odin -file -debug -microarch:native -show-timings -keep-executable -out:target/debug/{{name}}.exe {{args}}
+	odin run examples/{{name}}.odin -file -debug -microarch:native -show-timings -keep-executable -linker:{{linker}} -out:target/debug/{{name}}.exe {{args}}
 
 [windows]
 run_debug name="smoke" *args: mktarget_dirs
-	odin run examples/{{name}}.odin -file -debug -microarch:native -show-timings -keep-executable -out:target/debug/{{name}}.exe {{args}}
+	odin run examples/{{name}}.odin -file -debug -microarch:native -show-timings -keep-executable -linker:{{linker}} -out:target/debug/{{name}}.exe {{args}}
 
 alias run := run_debug
 
 # run an example with debug + optimizations (-keep-executable so `rerun_fastdebug` can skip recompiling)
 [unix]
 run_fastdebug name="smoke" *args: mktarget_dirs
-	odin run examples/{{name}}.odin -file -debug -o:speed -microarch:native -show-timings -keep-executable -out:target/fastdebug/{{name}}.exe {{args}}
+	odin run examples/{{name}}.odin -file -debug -o:speed -microarch:native -show-timings -keep-executable -linker:{{linker}} -out:target/fastdebug/{{name}}.exe {{args}}
 
 [windows]
 run_fastdebug name="smoke" *args: mktarget_dirs
-	odin run examples/{{name}}.odin -file -debug -o:speed -microarch:native -show-timings -keep-executable -out:target/fastdebug/{{name}}.exe {{args}}
+	odin run examples/{{name}}.odin -file -debug -o:speed -microarch:native -show-timings -keep-executable -linker:{{linker}} -out:target/fastdebug/{{name}}.exe {{args}}
 
 # run an example with optimizations (-keep-executable so `rerun_release` can skip recompiling)
 [unix]
 run_release name="smoke" *args: mktarget_dirs
-	odin run examples/{{name}}.odin -file -o:speed -microarch:native -show-timings -keep-executable -out:target/release/{{name}}.exe {{args}}
+	odin run examples/{{name}}.odin -file -o:speed -microarch:native -show-timings -keep-executable -linker:{{linker}} -out:target/release/{{name}}.exe {{args}}
 
 [windows]
 run_release name="smoke" *args: mktarget_dirs
-	odin run examples/{{name}}.odin -file -o:speed -microarch:native -show-timings -keep-executable -out:target/release/{{name}}.exe {{args}}
+	odin run examples/{{name}}.odin -file -o:speed -microarch:native -show-timings -keep-executable -linker:{{linker}} -out:target/release/{{name}}.exe {{args}}
 
 # re-run the last debug example binary WITHOUT recompiling (Odin has no build cache, so a plain `run`
 # always rebuilds). Requires a prior `run_debug`/`run` of the same example.
@@ -121,12 +134,12 @@ rerun_release name="smoke" *args:
 # run all tests (the @(test) procs inside examples/*.odin)
 [unix]
 test *args: mktarget_dirs
-	for f in examples/*.odin; do odin test "$f" -file -debug -microarch:native -define:ODIN_TEST_THREADS=1 -out:target/debug/{{test_main_name}} {{args}} || exit 1; done
+	for f in examples/*.odin; do odin test "$f" -file -debug -microarch:native -define:ODIN_TEST_THREADS=1 -linker:{{linker}} -out:target/debug/{{test_main_name}} {{args}} || exit 1; done
 
 # run all tests (the @(test) procs inside examples/*.odin)
 [windows]
 test *args: mktarget_dirs
-	Get-ChildItem examples/*.odin | ForEach-Object { odin test $_.FullName -file -debug -microarch:native -define:ODIN_TEST_THREADS=1 -out:target/debug/{{test_main_name}} {{args}}; if ($LASTEXITCODE -ne 0) { exit 1 } }
+	Get-ChildItem examples/*.odin | ForEach-Object { odin test $_.FullName -file -debug -microarch:native -define:ODIN_TEST_THREADS=1 -linker:{{linker}} -out:target/debug/{{test_main_name}} {{args}}; if ($LASTEXITCODE -ne 0) { exit 1 } }
 
 # Runs examples/<name>.odin. Filter to a single @(test) proc with extra args, e.g.
 # `just test1 solve_board -test-name:test_solve_board`. ODIN_TEST_THREADS=1: run serially -- see the
@@ -135,11 +148,11 @@ test *args: mktarget_dirs
 # run one example's tests (e.g. `just test1 solve_board`)
 [unix]
 test1 name *args: mktarget_dirs
-	odin test examples/{{name}}.odin -file -debug -microarch:native -show-timings -define:ODIN_TEST_THREADS=1 -out:target/debug/{{test_main_name}} {{args}}
+	odin test examples/{{name}}.odin -file -debug -microarch:native -show-timings -define:ODIN_TEST_THREADS=1 -linker:{{linker}} -out:target/debug/{{test_main_name}} {{args}}
 
 [windows]
 test1 name *args: mktarget_dirs
-	odin test examples/{{name}}.odin -file -debug -microarch:native -show-timings -define:ODIN_TEST_THREADS=1 -out:target/debug/{{test_main_name}} {{args}}
+	odin test examples/{{name}}.odin -file -debug -microarch:native -show-timings -define:ODIN_TEST_THREADS=1 -linker:{{linker}} -out:target/debug/{{test_main_name}} {{args}}
 
 # simple delete of all debug databases and executables in the target directory
 [unix]
@@ -155,7 +168,7 @@ clean:
 
 # build an example with verbose diagnostics
 diagnose name="smoke" *args: mktarget_dirs
-	odin build examples/{{name}}.odin -file -debug -microarch:native -show-more-timings -show-debug-messages -show-timings -out:target/debug/{{name}}.exe {{args}}
+	odin build examples/{{name}}.odin -file -debug -microarch:native -show-more-timings -show-debug-messages -show-timings -linker:{{linker}} -out:target/debug/{{name}}.exe {{args}}
 
 
 # Static, not DLL: the archive links and self-contains into one exe. Trade-off: DDS's DllMain/
