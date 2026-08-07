@@ -1,4 +1,6 @@
-set windows-shell := ["powershell", "-NoLogo", "-Command"]
+# -NoProfile keeps recipes reproducible: a developer's profile cannot redefine an alias a recipe
+# uses. (src/build.bat self-loads vcvars64, so the MSVC environment does not come from a profile.)
+set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
 set shell := ["bash", "-c"]
 
 test_main_name := "test-main.exe"
