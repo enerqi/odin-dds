@@ -1,4 +1,54 @@
-# Normalize all text to LF in history AND force LF in the working tree, so the
-# editor / odinfmt (both LF, per .editorconfig) match what git checks out — even
-# when core.autocrlf=true. eol=lf overrides autocrlf; auto-detection skips binaries.
+# Normalize all text to LF in history AND force LF in the working tree, so the editor / odinfmt (both
+# LF, per .editorconfig and odinfmt.json's `newline_style`) match what git checks out - even when
+# core.autocrlf=true, which Git for Windows sets in its system config. eol=lf overrides autocrlf.
+#
+# Keep this in sync with .editorconfig's `end_of_line` and odinfmt.json's `newline_style`. odinfmt does
+# NOT read .editorconfig, so without the odinfmt.json setting it writes CRLF on Windows and re-dirties
+# the tree after every `just format` against this LF index.
 * text=auto eol=lf
+
+# Windows batch is the exception: CRLF is what cmd.exe natively expects, and LF-only batch has known
+# failure modes around labels and multi-line blocks. src/build.cmd and src/build-v3.cmd were being
+# checked out LF by the rule above - they happen to work, but this is not a bet worth carrying on the
+# scripts that build the DDS library. Going LF -> CRLF cannot break a batch file; only the reverse can.
+#
+# Nothing needs committing for this. The index keeps LF either way (the clean filter strips CR on the
+# way in); `eol=crlf` only changes what the smudge filter writes into the working directory. Git will
+# NOT rewrite a file that is already sitting there, so an existing checkout stays LF until the file is
+# re-checked-out (`rm src/build.cmd && git checkout -- src/build.cmd`), and `git status` reads clean
+# before and after. `git add --renormalize` is the wrong tool here - it operates on the index, which is
+# already correct.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Never normalize these. `text=auto` guesses by looking for a NUL byte in the first 8000 bytes, which
+# is a heuristic and not a guarantee - this repository already shows it going both ways on the SAME
+# format: external/dds/doc/Par Calculation.rtf is auto-detected binary while the other three .rtf files
+# are not, purely because of where NUL bytes happen to land. The prebuilt libraries and the vendored
+# Office/PDF documents are the files where guessing wrong means silent corruption, so they say so
+# explicitly rather than relying on the guess.
+*.exe binary
+*.pdb binary
+*.lib binary
+*.dll binary
+*.obj binary
+*.o binary
+*.so binary
+*.dylib binary
+*.a binary
+*.bc binary
+*.spall binary
+*.pdf binary
+*.rtf binary
+*.mht binary
+*.thmx binary
+
+# The vendored upstream DDS source (see external/dds/VENDORED.md) is 30 headers and 27 .cpp files
+# against this project's 23 .odin, so GitHub's language bar reports a C++ repository unless it is told
+# otherwise. `vendored` rather than `generated`: it is hand-written, just not ours.
+#
+# The trailing `**` is load-bearing. gitattributes borrows gitignore's pattern syntax but not its
+# directory semantics: a pattern matching a directory does NOT recursively cover the paths inside it,
+# so a bare `external/dds/` would apply to nothing at all.
+external/dds/** linguist-vendored=true
