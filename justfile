@@ -7,12 +7,26 @@
 #
 # The cost is that cmd is a poor language for a multi-line recipe. So the three recipes that genuinely
 # needed shell logic - `format`, `lint`, `test`, each of which loops over examples/*.odin - are now
-# `[script("python")]` instead, which also collapses the [unix]/[windows] pairs they used to need into
-# one body each. Several other pairs were byte-identical and are simply merged.
+# `[script]` instead (interpreter set once below via `set script-interpreter`), which also collapses
+# the [unix]/[windows] pairs they used to need into one body each. Several other pairs were
+# byte-identical and are simply merged.
 set windows-shell := ["cmd.exe", "/c"]
 set shell := ["bash", "-c"]
-set unstable  # [script("python")] and user-defined functions (`target_path`) are still gated
+set unstable  # [script] and user-defined functions (`target_path`) are still gated
 set lazy
+
+# `python` alone is not a reliable cross-platform lookup: scoop (Windows) installs whatever version was
+# last `scoop install`ed under the bare name `python`, with no version pin, and a bare `python3`/`python`
+# on Linux is whatever the distro shipped. `uv run -p 3.14 python` sidesteps both - uv resolves (and
+# downloads if missing) exactly 3.14 (latest stable; these scripts only use stdlib glob/subprocess/sys/os,
+# so no version-specific feature is pinning this lower), the same on every platform, so uv becomes the
+# one tool these recipes depend on instead of a system python. `--no-project`: without it, `uv run` walks
+# up from cwd looking for a pyproject.toml/uv.toml to treat as the project root - none exists above this
+# repo today, but if one ever did (e.g. a stray python project two directories up), these recipes would
+# silently start syncing/using *that* project's venv and pinned version instead of the one below.
+# `--no-project` disables that discovery so the version here is the only one that applies. Recipes opt in
+# with the bare `[script]` attribute (no interpreter argument) to pick this up.
+set script-interpreter := ["uv", "run", "--no-project", "-p", "3.14", "python"]
 
 # Set by the newest just feature used below - user-defined functions (1.49), for `target_path`.
 # Older features also needed: `join()` 1.37, `set lazy` 1.47. Without this an old just reports a plain
@@ -77,7 +91,7 @@ format:
 # `ForEach-Object` that had to be maintained in parallel). Accepts extra args like `--show-timings`.
 # ---
 # type check + vet + strict style
-[script("python")]
+[script]
 lint *args:
 	import glob, subprocess, sys
 
@@ -168,7 +182,7 @@ rerun_release name="smoke" *args:
 # this pins it safe if a file ever gains a second @(test).
 # ---
 # run all tests (the @(test) procs inside examples/*.odin)
-[script("python")]
+[script]
 test *args: mktarget_dirs
 	import glob, os, subprocess
 
@@ -245,7 +259,7 @@ build-lib:
 # platform.
 # ---
 # regenerate the Odin bindings from external/dds/include/dll.h
-[script("python")]
+[script]
 bindgen:
 	import os, subprocess
 
